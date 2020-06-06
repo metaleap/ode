@@ -7,6 +7,8 @@
 #include "utils_libc_deps_basics.c"
 
 
+typedef struct termios Termios;
+
 
 #define term_esc "\x1b["
 #define ode_output_screen_max_width 256
@@ -14,9 +16,6 @@
 #define ode_output_screen_buf_size (64 * ode_output_screen_max_width * ode_output_screen_max_height)
 #define ode_input_buf_size (1 * 1024 * 1024)
 
-
-
-typedef struct termios Termios;
 
 typedef struct OdeRgbaColor {
     U8 r;
@@ -26,17 +25,17 @@ typedef struct OdeRgbaColor {
 } OdeRgbaColor;
 
 typedef struct OdeScreenCell {
-    U32 rune;
     struct Color {
         OdeRgbaColor bg;
         OdeRgbaColor fg;
     } color;
-    struct StyleBits {
+    struct Style {
         Bool bold : 1;
         Bool italic : 1;
         Bool underline : 1;
         Bool strikethru : 1;
     } style;
+    U32 rune;
     Bool dirty;
 } OdeScreenCell;
 
@@ -45,6 +44,18 @@ typedef struct OdeScreenGrid {
 } OdeScreenGrid;
 
 struct Ode {
+    struct Init {
+        Strs argv_paths;
+        struct {
+            Termios orig_attrs;
+            Bool orig_attrs_got;
+        } term;
+    } init;
+    struct Input {
+        U8 buf[ode_input_buf_size];
+        UInt n_bytes_read;
+        Bool exit_requested;
+    } input;
     struct Output {
         U8 buf[ode_output_screen_buf_size];
         struct Screen {
@@ -56,19 +67,6 @@ struct Ode {
             } size;
         } screen;
     } output;
-
-    struct Input {
-        U8 buf[ode_input_buf_size];
-        Bool exit_requested;
-    } input;
-
-    struct Init {
-        Strs argv_paths;
-        struct {
-            Termios orig_attrs;
-            Bool orig_attrs_got;
-        } term;
-    } init;
 } ode;
 
 
@@ -95,6 +93,16 @@ static void termClearAndPosTopLeft() {
     termPositionCursorAtTopLeftCorner();
 }
 
+static void termAltEnter() {
+    write(1, term_esc "?47h", 2 + 4);
+    termClearAndPosTopLeft();
+}
+
+static void termAltLeave() {
+    write(1, term_esc "?47l", 2 + 4);
+    termClearAndPosTopLeft();
+}
+
 static void termRawOff() {
     if (ode.init.term.orig_attrs_got)
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &ode.init.term.orig_attrs);
@@ -102,7 +110,7 @@ static void termRawOff() {
 
 void odeDie(CStr const hint) {
     termRawOff();
-    termClearAndPosTopLeft();
+    termAltLeave();
     perror(hint);
     abort();
 }
@@ -142,56 +150,10 @@ static void updateScreenSize() {
 static void termInit() {
     ode.init.term.orig_attrs_got = false;
     termRawOn();
-    atexit(termClearAndPosTopLeft);
+    atexit(termAltLeave);
     atexit(termRawOff);
     updateScreenSize();
-}
-
-Bool odeProcessInput() {
-    Int n_bytes_read = read(STDIN_FILENO, ode.input.buf, ode_input_buf_size);
-    if (n_bytes_read < 0) {
-        if (errno == EAGAIN)
-            n_bytes_read = 0;
-        else
-            odeDie("odeProcessInput: read");
-    }
-
-    if (n_bytes_read != 0) {
-        fprintf(stdout, "%zd ", n_bytes_read);
-        fflush(stdout);
-    }
-
-    for (UInt i = 0, max = n_bytes_read; i < max; i += 1)
-        if (ode.input.buf[i] == (0x1f & 'q'))
-            ode.input.exit_requested = true;
-
-    return false;
-}
-
-void odeRenderOutput() {
-    Bool got_dirty_cells = false;
-
-    for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
-        for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
-            OdeScreenCell* dst = &ode.output.screen.dst.cells[x][y];
-            OdeScreenCell* src = &ode.output.screen.src.cells[x][y];
-            dst->dirty = (src->rune != dst->rune) || (!rgbaEql(&src->color.bg, &dst->color.bg)) || (!rgbaEql(&src->color.fg, &dst->color.fg));
-            got_dirty_cells |= dst->dirty;
-        }
-
-    if (got_dirty_cells) {
-        Str buf = (Str) {.len = 0, .at = &ode.output.buf[0]};
-        for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
-            for (UInt y = 0; y < ode_output_screen_max_height; y += 1)
-                if (ode.output.screen.dst.cells[x][y].dirty) {
-                    // TODO: append positioning / formatting escapes and the cell's rune
-                }
-        if (buf.len > 0) {
-            Int const n_written = write(STDOUT_FILENO, buf.at, buf.len);
-            if (n_written < 0 || ((UInt)n_written) != buf.len)
-                odeDie("odeRenderOutput: write");
-        }
-    }
+    termAltEnter();
 }
 
 void odeInit() {
@@ -202,9 +164,15 @@ void odeInit() {
         for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
             for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
                 ode.output.screen.dst.cells[x][y] =
-                    (OdeScreenCell) {.dirty = false, .color = {.bg = rgba(0, 0, 0, 255), .fg = rgba(0, 0, 0, 255)}, .rune = 0};
-                ode.output.screen.src.cells[x][y] = (OdeScreenCell) {
-                    .dirty = false, .color = {.bg = rgba(0xef, 0xe9, 0xe8, 255), .fg = rgba(0x68, 0x64, 0x61, 255)}, .rune = '?'};
+                    (OdeScreenCell) {.rune = 0,
+                                     .dirty = false,
+                                     .color = {.bg = rgba(0, 0, 0, 0xff), .fg = rgba(0, 0, 0, 0xff)},
+                                     .style = {.bold = false, .italic = false, .underline = false, .strikethru = false}};
+                ode.output.screen.src.cells[x][y] =
+                    (OdeScreenCell) {.rune = '?',
+                                     .dirty = false,
+                                     .color = {.bg = rgba(0x39, 0x32, 0x30, 0xff), .fg = rgba(0xb8, 0xb0, 0xa8, 0xff)},
+                                     .style = {.bold = false, .italic = false, .underline = false, .strikethru = false}};
             }
     }
     termInit();
