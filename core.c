@@ -18,49 +18,68 @@
 
 typedef struct termios Termios;
 
-typedef struct OdeRgbColor {
+typedef struct OdeRgbaColor {
     U8 r;
     U8 g;
     U8 b;
-} OdeRgbColor;
+    U8 a;
+} OdeRgbaColor;
 
 typedef struct OdeScreenCell {
-    struct {
-        OdeRgbColor bg;
-        OdeRgbColor fg;
+    U32 rune;
+    struct Color {
+        OdeRgbaColor bg;
+        OdeRgbaColor fg;
     } color;
-    U32 content;
+    struct StyleBits {
+        Bool bold : 1;
+        Bool italic : 1;
+        Bool underline : 1;
+        Bool strikethru : 1;
+    } style;
+    Bool dirty;
 } OdeScreenCell;
 
 typedef struct OdeScreenGrid {
     OdeScreenCell cells[ode_output_screen_max_width][ode_output_screen_max_height];
 } OdeScreenGrid;
 
-struct {
-    struct {
-        Termios orig_attrs;
-        Bool orig_attrs_got;
-        U8 out_buf[ode_output_screen_buf_size];
-    } term;
-    struct {
-        OdeScreenGrid last;
-        OdeScreenGrid next;
-        struct {
-            UInt width;
-            UInt height;
-        } size;
-    } screen;
-    struct {
+struct Ode {
+    struct Output {
+        U8 buf[ode_output_screen_buf_size];
+        struct Screen {
+            OdeScreenGrid dst;
+            OdeScreenGrid src;
+            struct {
+                UInt width;
+                UInt height;
+            } size;
+        } screen;
+    } output;
+
+    struct Input {
         U8 buf[ode_input_buf_size];
         Bool exit_requested;
     } input;
+
+    struct Init {
+        Strs argv_paths;
+        struct {
+            Termios orig_attrs;
+            Bool orig_attrs_got;
+        } term;
+    } init;
 } ode;
 
 
 
 
-OdeRgbColor rgb(U8 r, U8 g, U8 b) {
-    return (OdeRgbColor) {.r = r, .g = g, .b = b};
+OdeRgbaColor rgba(U8 const r, U8 const g, U8 const b, U8 const a) {
+    return (OdeRgbaColor) {.r = r, .g = g, .b = b, .a = a};
+}
+
+Bool rgbaEql(OdeRgbaColor const* const c1, OdeRgbaColor const* const c2) {
+    return (c1->r == c2->r) && (c1->g == c2->g) && (c1->b == c2->b) && (c1->a == c2->a);
 }
 
 static void termClearScreen() {
@@ -77,8 +96,8 @@ static void termClearAndPosTopLeft() {
 }
 
 static void termRawOff() {
-    if (ode.term.orig_attrs_got)
-        tcsetattr(0, TCSAFLUSH, &ode.term.orig_attrs);
+    if (ode.init.term.orig_attrs_got)
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, &ode.init.term.orig_attrs);
 }
 
 void odeDie(CStr const hint) {
@@ -89,11 +108,11 @@ void odeDie(CStr const hint) {
 }
 
 static void termRawOn() {
-    if (-1 == tcgetattr(0, &ode.term.orig_attrs))
+    if (-1 == tcgetattr(STDIN_FILENO, &ode.init.term.orig_attrs))
         odeDie("termRawOn: tcgetattr");
-    ode.term.orig_attrs_got = true;
+    ode.init.term.orig_attrs_got = true;
 
-    Termios new_attrs = ode.term.orig_attrs;
+    Termios new_attrs = ode.init.term.orig_attrs;
     new_attrs.c_iflag &= ~(BRKINT     // disable break-condition-to-signal-raising (Ctl+C)
                            | ICRNL    // disable CR-LF so that Enter/Return key sends \n not \r\n
                            | INPCK    // disable parity-checking (not applicable to software terminals)
@@ -108,7 +127,7 @@ static void termRawOn() {
     new_attrs.c_cc[VMIN] = 0;         // read() returns as soon as any amount of input bytes
     new_attrs.c_cc[VTIME] = 1;        // read() times out after 1/10 sec
 
-    if (-1 == tcsetattr(0, TCSAFLUSH, &new_attrs))
+    if (-1 == tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_attrs))
         odeDie("termRawOn: tcsetattr");
 }
 
@@ -116,12 +135,12 @@ static void updateScreenSize() {
     struct winsize win_size = {.ws_row = 0, .ws_col = 0};
     if ((-1 == ioctl(1, TIOCGWINSZ, &win_size)) || (win_size.ws_row == 0) || (win_size.ws_col == 0))
         odeDie("updateScreenSize: ioctl");
-    ode.screen.size.width = win_size.ws_col;
-    ode.screen.size.height = win_size.ws_row;
+    ode.output.screen.size.width = win_size.ws_col;
+    ode.output.screen.size.height = win_size.ws_row;
 }
 
 static void termInit() {
-    ode.term.orig_attrs_got = false;
+    ode.init.term.orig_attrs_got = false;
     termRawOn();
     atexit(termClearAndPosTopLeft);
     atexit(termRawOff);
@@ -129,20 +148,20 @@ static void termInit() {
 }
 
 Bool odeProcessInput() {
-    Int num_bytes_last_read = read(0, ode.input.buf, ode_input_buf_size);
-    if (num_bytes_last_read < 0) {
+    Int n_bytes_read = read(STDIN_FILENO, ode.input.buf, ode_input_buf_size);
+    if (n_bytes_read < 0) {
         if (errno == EAGAIN)
-            num_bytes_last_read = 0;
+            n_bytes_read = 0;
         else
             odeDie("odeProcessInput: read");
     }
 
-    if (num_bytes_last_read != 0) {
-        fprintf(stdout, "%zd ", num_bytes_last_read);
+    if (n_bytes_read != 0) {
+        fprintf(stdout, "%zd ", n_bytes_read);
         fflush(stdout);
     }
 
-    for (UInt i = 0, max = num_bytes_last_read; i < max; i += 1)
+    for (UInt i = 0, max = n_bytes_read; i < max; i += 1)
         if (ode.input.buf[i] == (0x1f & 'q'))
             ode.input.exit_requested = true;
 
@@ -150,18 +169,42 @@ Bool odeProcessInput() {
 }
 
 void odeRenderOutput() {
+    Bool got_dirty_cells = false;
+
+    for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
+        for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
+            OdeScreenCell* dst = &ode.output.screen.dst.cells[x][y];
+            OdeScreenCell* src = &ode.output.screen.src.cells[x][y];
+            dst->dirty = (src->rune != dst->rune) || (!rgbaEql(&src->color.bg, &dst->color.bg)) || (!rgbaEql(&src->color.fg, &dst->color.fg));
+            got_dirty_cells |= dst->dirty;
+        }
+
+    if (got_dirty_cells) {
+        Str buf = (Str) {.len = 0, .at = &ode.output.buf[0]};
+        for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
+            for (UInt y = 0; y < ode_output_screen_max_height; y += 1)
+                if (ode.output.screen.dst.cells[x][y].dirty) {
+                    // TODO: append positioning / formatting escapes and the cell's rune
+                }
+        if (buf.len > 0) {
+            Int const n_written = write(STDOUT_FILENO, buf.at, buf.len);
+            if (n_written < 0 || ((UInt)n_written) != buf.len)
+                odeDie("odeRenderOutput: write");
+        }
+    }
 }
 
 void odeInit() {
     { // init global shared mutable state `ode`
         ode.input.exit_requested = false;
         for (UInt i = 0; i < ode_output_screen_buf_size; i += 1)
-            ode.term.out_buf[i] = '?';
+            ode.output.buf[i] = '?';
         for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
             for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
-                ode.screen.last.cells[x][y] = (OdeScreenCell) {.color = {.bg = rgb(0, 0, 0), .fg = rgb(0, 0, 0)}, .content = 0};
-                ode.screen.next.cells[x][y] =
-                    (OdeScreenCell) {.color = {.bg = rgb(0xef, 0xe9, 0xe8), .fg = rgb(0x68, 0x64, 0x61)}, .content = '?'};
+                ode.output.screen.dst.cells[x][y] =
+                    (OdeScreenCell) {.dirty = false, .color = {.bg = rgba(0, 0, 0, 255), .fg = rgba(0, 0, 0, 255)}, .rune = 0};
+                ode.output.screen.src.cells[x][y] = (OdeScreenCell) {
+                    .dirty = false, .color = {.bg = rgba(0xef, 0xe9, 0xe8, 255), .fg = rgba(0x68, 0x64, 0x61, 255)}, .rune = '?'};
             }
     }
     termInit();
