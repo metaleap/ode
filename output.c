@@ -8,7 +8,7 @@ void odeRenderOutput() {
         for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
             OdeScreenCell* dst = &ode.output.screen.dst.cells[x][y];
             OdeScreenCell* src = &ode.output.screen.src.cells[x][y];
-            dst->dirty = (src->rune != dst->rune) || (!rgbaEql(&src->color.bg, &dst->color.bg)) || (!rgbaEql(&src->color.fg, &dst->color.fg));
+            dst->dirty = (src->rune != dst->rune) || (!rgbaEq(&src->color.bg, &dst->color.bg)) || (!rgbaEq(&src->color.fg, &dst->color.fg));
             got_dirty_cells |= dst->dirty;
         }
 

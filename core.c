@@ -5,6 +5,8 @@
 #include <termios.h>
 #include <unistd.h>
 #include "utils_libc_deps_basics.c"
+#include "common.c"
+#include "ui_ctl_panel.c"
 
 
 typedef struct termios Termios;
@@ -17,24 +19,10 @@ typedef struct termios Termios;
 #define ode_input_buf_size (1 * 1024 * 1024)
 
 
-typedef struct OdeRgbaColor {
-    U8 r;
-    U8 g;
-    U8 b;
-    U8 a;
-} OdeRgbaColor;
 
 typedef struct OdeScreenCell {
-    struct Color {
-        OdeRgbaColor bg;
-        OdeRgbaColor fg;
-    } color;
-    struct Style {
-        Bool bold : 1;
-        Bool italic : 1;
-        Bool underline : 1;
-        Bool strikethru : 1;
-    } style;
+    OdeColored color;
+    OdeGlyphStyleFlags style;
     U32 rune;
     Bool dirty;
 } OdeScreenCell;
@@ -61,24 +49,14 @@ struct Ode {
         struct Screen {
             OdeScreenGrid dst;
             OdeScreenGrid src;
-            struct {
-                UInt width;
-                UInt height;
-            } size;
+            OdeSize size;
         } screen;
     } output;
+    OdeUiCtlPanel ui;
 } ode;
 
 
 
-
-OdeRgbaColor rgba(U8 const r, U8 const g, U8 const b, U8 const a) {
-    return (OdeRgbaColor) {.r = r, .g = g, .b = b, .a = a};
-}
-
-Bool rgbaEql(OdeRgbaColor const* const c1, OdeRgbaColor const* const c2) {
-    return (c1->r == c2->r) && (c1->g == c2->g) && (c1->b == c2->b) && (c1->a == c2->a);
-}
 
 static void termClearScreen() {
     write(1, term_esc "2J", 2 + 2);
@@ -166,13 +144,13 @@ void odeInit() {
                 ode.output.screen.dst.cells[x][y] =
                     (OdeScreenCell) {.rune = 0,
                                      .dirty = false,
-                                     .color = {.bg = rgba(0, 0, 0, 0xff), .fg = rgba(0, 0, 0, 0xff)},
-                                     .style = {.bold = false, .italic = false, .underline = false, .strikethru = false}};
+                                     .style = ode_glyphstyle_none,
+                                     .color = {.bg = rgba(0x00, 0x00, 0x00, 0xff), .fg = rgba(0x00, 0x00, 0x00, 0xff)}};
                 ode.output.screen.src.cells[x][y] =
                     (OdeScreenCell) {.rune = '?',
                                      .dirty = false,
-                                     .color = {.bg = rgba(0x39, 0x32, 0x30, 0xff), .fg = rgba(0xb8, 0xb0, 0xa8, 0xff)},
-                                     .style = {.bold = false, .italic = false, .underline = false, .strikethru = false}};
+                                     .style = ode_glyphstyle_none,
+                                     .color = {.bg = rgba(0x39, 0x32, 0x30, 0xff), .fg = rgba(0xb8, 0xb0, 0xa8, 0xff)}};
             }
     }
     termInit();
