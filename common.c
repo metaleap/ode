@@ -3,13 +3,13 @@
 
 typedef enum OdeGlyphStyleFlags {
     ode_glyphstyle_none = 0,
-    ode_glyphstyle_bold = 2,
-    ode_glyphstyle_italic = 4,
-    ode_glyphstyle_underline = 8,
-    ode_glyphstyle_strikethru = 16,
-    ode_glyphstyle_underline2 = 32,
-    ode_glyphstyle_underline3 = 64,
-    ode_glyphstyle_overline = 128,
+    ode_glyphstyle_bold = 1,
+    ode_glyphstyle_italic = 2,
+    ode_glyphstyle_underline = 4,
+    ode_glyphstyle_strikethru = 8,
+    ode_glyphstyle_underline2 = 16,
+    ode_glyphstyle_underline3 = 32,
+    ode_glyphstyle_overline = 64,
 } OdeGlyphStyleFlags;
 
 typedef enum OdeOrientation {

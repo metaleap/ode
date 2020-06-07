@@ -35,7 +35,6 @@ void odeRenderOutput() {
                           || (prep->color.bg != real->color.bg) || (prep->color.fg != real->color.fg);
             got_dirty_cells |= dirty[x][y];
         }
-    is_very_first_render = false;
 
 #define ode_output_screen_buf_size (64 * ode_output_screen_max_width * ode_output_screen_max_height)
     static U8 out_buf[ode_output_screen_buf_size];
@@ -59,13 +58,28 @@ void odeRenderOutput() {
 
                     // handle styles before colors, because here we might issue a reset-attrs
                     Bool styles_reset = false;
-                    if (cell->style != cur.style) {
-                        static CStr ansis[129] = {
-                            [ode_glyphstyle_none] = term_esc "0m",         [ode_glyphstyle_bold] = term_esc "1m",
-                            [ode_glyphstyle_italic] = term_esc "3m",       [ode_glyphstyle_underline] = term_esc "4m",
-                            [ode_glyphstyle_strikethru] = term_esc "9m",   [ode_glyphstyle_underline2] = term_esc "21m",
-                            [ode_glyphstyle_underline3] = term_esc "4:3m", [ode_glyphstyle_overline] = term_esc "53m",
+                    if (cell->style != cur.style || is_very_first_render) {
+                        static CStr ansis[97] = {
+                            [ode_glyphstyle_none] = "",
+                            [ode_glyphstyle_bold] = term_esc "1m",
+                            [ode_glyphstyle_italic] = term_esc "3m",
+                            [ode_glyphstyle_underline] = term_esc "4m",
+                            [ode_glyphstyle_strikethru] = term_esc "9m",
+                            [ode_glyphstyle_underline2] = term_esc "21m",
+                            [ode_glyphstyle_underline3] = term_esc "4:3m",
+                            [ode_glyphstyle_overline] = term_esc "53m",
                         };
+                        if (str(ansis[ode_glyphstyle_none]).len == 0) {
+                            ansis[ode_glyphstyle_none] = term_esc "0m";
+                            // #define ode_glyphstyle_count 7
+                            // OdeGlyphStyleFlags flags[ode_glyphstyle_count];
+                            // for (UInt i = 0, st0 = ode_glyphstyle_bold; st0 <= ode_glyphstyle_overline; st0 =
+                            // st0 + st0) {
+                            //     flags[i] = st0;
+                            //     i += 1;
+                            // }
+                        }
+
                         cur.style = cell->style;
                         if (ansis[cur.style] == NULL)
                             odeDie(strZ(str2(str("TODO add glyphstyle to ansis: "), uIntToStr(cur.style, 1, 10))), false);
@@ -100,7 +114,8 @@ void odeRenderOutput() {
                 }
 
         // odeDie(strZ(uIntToStr(buf.len, 1, 10)), false);
-        if ((buf.len > 0) && (write(STDOUT_FILENO, buf.at, buf.len) != (Int)buf.len))
-            odeDie("odeRenderOutput: write", true);
+        // if ((buf.len > 0) && (write(STDOUT_FILENO, buf.at, buf.len) != (Int)buf.len))
+        //     odeDie("odeRenderOutput: write", true);
     }
+    is_very_first_render = false;
 }
