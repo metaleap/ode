@@ -22,48 +22,84 @@ void renderControl(OdeUiCtl* const ctl, OdePos const screen_rect_pos, OdeSize co
 }
 
 void odeRenderOutput() {
+    static Bool is_very_first_render = true;
     renderControl(&ode.ui.main.base, (OdePos) {.x = 0, .y = 0}, ode.output.screen.size);
 
     static Bool dirty[ode_output_screen_max_width][ode_output_screen_max_height];
-    Bool got_dirty_cells = false;
+    Bool got_dirty_cells = is_very_first_render;
     for (UInt x = 0; x < ode.output.screen.size.width; x += 1)
         for (UInt y = 0; y < ode.output.screen.size.height; y += 1) {
             OdeScreenCell* prep = &ode.output.screen.prep.cells[x][y];
             OdeScreenCell* real = &ode.output.screen.real.cells[x][y];
-            dirty[x][y] = (prep->rune.u32 != real->rune.u32) || (prep->style != real->style) || (prep->color.bg != real->color.bg)
-                          || (prep->color.fg != real->color.fg);
+            dirty[x][y] = is_very_first_render || (prep->rune.u32 != real->rune.u32) || (prep->style != real->style)
+                          || (prep->color.bg != real->color.bg) || (prep->color.fg != real->color.fg);
             got_dirty_cells |= dirty[x][y];
         }
+    is_very_first_render = false;
 
 #define ode_output_screen_buf_size (64 * ode_output_screen_max_width * ode_output_screen_max_height)
     static U8 out_buf[ode_output_screen_buf_size];
     if (got_dirty_cells) {
         ·ListOf(U8) buf = {.len = 0, .cap = ode_output_screen_buf_size, .at = &out_buf[0]};
 #define ·out(·the·str)                                                                                                                       \
-    { buf.len = strCopyTo((Str) {.at = buf.at, .len = buf.len}, (·the·str)).len; }
+    do {                                                                                                                                     \
+        buf.len = strCopyTo((Str) {.at = buf.at, .len = buf.len}, (·the·str)).len;                                                           \
+    } while (0)
 
-        static OdeScreenCell cur = {.color = {.bg = NULL, .fg = NULL}};
-        if (cur.color.bg == NULL && cur.color.fg == NULL)
-            cur = ode.output.screen.real.cells[0][0];
-        for (UInt x = 0; x < ode.output.screen.size.width; x += 1)
-            for (UInt y = 0; y < ode.output.screen.size.height; y += 1)
+        OdePos last = {.x = 0, .y = 0};
+        static OdeScreenCell cur = {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
+        for (UInt y = 0; y < ode.output.screen.size.height; y += 1)
+            for (UInt x = 0; x < ode.output.screen.size.width; x += 1)
                 if (dirty[x][y]) {
                     OdeScreenCell* const cell = &ode.output.screen.prep.cells[x][y];
 
-                    ·out(ode.output.screen.term_esc_cursor_pos[x][y]);
-                    if (cell->color.bg != cur.color.bg) {
-                        cur.color.bg = cell->color.bg;
-                        ·out(strL(term_esc "48", 2 + 2));
-                        ·out(cell->color.bg->ansi_esc);
+                    // position cursor, unless we're next to previous
+                    if ((x != (last.x + 1)) || (y != last.y))
+                        ·out(ode.output.screen.term_esc_cursor_pos[x][y]);
+
+                    // handle styles before colors, because here we might issue a reset-attrs
+                    Bool styles_reset = false;
+                    if (cell->style != cur.style) {
+                        static CStr ansis[129] = {
+                            [ode_glyphstyle_none] = term_esc "0m",         [ode_glyphstyle_bold] = term_esc "1m",
+                            [ode_glyphstyle_italic] = term_esc "3m",       [ode_glyphstyle_underline] = term_esc "4m",
+                            [ode_glyphstyle_strikethru] = term_esc "9m",   [ode_glyphstyle_underline2] = term_esc "21m",
+                            [ode_glyphstyle_underline3] = term_esc "4:3m", [ode_glyphstyle_overline] = term_esc "53m",
+                        };
+                        cur.style = cell->style;
+                        if (ansis[cur.style] == NULL)
+                            odeDie(strZ(str2(str("TODO add glyphstyle to ansis: "), uIntToStr(cur.style, 1, 10))), false);
+                        ·out(str(ansis[cur.style]));
+                        styles_reset = (cur.style == 0);
                     }
-                    if (cell->color.fg != cur.color.fg) {
-                        cur.color.fg = cell->color.fg;
-                        ·out(strL(term_esc "38", 2 + 2));
-                        ·out(cell->color.fg->ansi_esc);
+                    for (UInt i = 0; i < 3; i += 1) { // colors: 0=bg, 1=fg, 2=ul3
+                        OdeRgbaColor** col_cur = (i == 2) ? &cur.color.ul3 : (i == 1) ? &cur.color.fg : &cur.color.bg;
+                        OdeRgbaColor* const col_cell = (i == 2) ? cell->color.ul3 : (i == 1) ? cell->color.fg : cell->color.bg;
+                        CStr const ansi_reset = (i == 2) ? (term_esc "59m") : (i == 1) ? (term_esc "39m") : (term_esc "49m");
+                        CStr const ansi_set = (i == 2) ? (term_esc "58") : (i == 1) ? (term_esc "38") : (term_esc "48");
+                        if (styles_reset || col_cell != *col_cur) {
+                            *col_cur = col_cell;
+                            if (col_cell == NULL)
+                                ·out(strL(ansi_reset, 2 + 3));
+                            else {
+                                ·out(strL(ansi_set, 2 + 2));
+                                ·out(col_cell->ansi_esc);
+                            }
+                        }
                     }
-                    ·out(((Str) {.len = (cell->rune.u32 < 256) ? 1 : (cell->rune.u32 < 65536) ? 2 : (cell->rune.u32 < 16777216) ? 3 : 4,
-                                 .at = (cell->rune.u32 == 0) ? strL(".", 1).at : cell->rune.bytes}));
+
+                    Str rune_str = (cell->rune.u32 == 0) ? ·len0(U8) : (Str) {.at = cell->rune.bytes, .len = 4};
+                    if (rune_str.len != 0)
+                        for (UInt i = 0; i < 4; i += 1)
+                            if (cell->rune.bytes[i] == 0) {
+                                rune_str.len = i;
+                                break;
+                            }
+                    ·out((rune_str.len == 0) ? strL(".", 1) : rune_str);
+                    last = (OdePos) {.x = x, .y = y};
                 }
+
+        // odeDie(strZ(uIntToStr(buf.len, 1, 10)), false);
         if ((buf.len > 0) && (write(STDOUT_FILENO, buf.at, buf.len) != (Int)buf.len))
             odeDie("odeRenderOutput: write", true);
     }

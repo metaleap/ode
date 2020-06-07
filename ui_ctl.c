@@ -32,16 +32,6 @@ typedef ·ListOfPtrs(OdeUiCtl) OdeUiCtls;
 
 
 OdeUiCtl odeUiCtl(Str const text, OdeUiCtlDocking const dock, OdePos const pos, OdeSize const size) {
-    OdeUiCtl ret_ctl = (OdeUiCtl) {.on = {.render = NULL},
-                                   .color = {.bg = NULL, .fg = NULL},
-                                   .style = ode_glyphstyle_none,
-                                   .dirty = true,
-                                   .disabled = false,
-                                   .visible = true,
-                                   .focused = false,
-                                   .text = text,
-                                   .dock = dock,
-                                   .pos = pos,
-                                   .size = size};
+    OdeUiCtl ret_ctl = (OdeUiCtl) {.dirty = true, .visible = true, .text = text, .dock = dock, .pos = pos, .size = size};
     return ret_ctl;
 }

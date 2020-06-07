@@ -7,6 +7,9 @@ typedef enum OdeGlyphStyleFlags {
     ode_glyphstyle_italic = 4,
     ode_glyphstyle_underline = 8,
     ode_glyphstyle_strikethru = 16,
+    ode_glyphstyle_underline2 = 32,
+    ode_glyphstyle_underline3 = 64,
+    ode_glyphstyle_overline = 128,
 } OdeGlyphStyleFlags;
 
 typedef enum OdeOrientation {
@@ -42,4 +45,5 @@ typedef ·ListOf(OdeRgbaColor) OdeRgbaColors;
 typedef struct OdeColored {
     OdeRgbaColor* bg;
     OdeRgbaColor* fg;
+    OdeRgbaColor* ul3;
 } OdeColored;

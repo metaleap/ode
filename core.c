@@ -163,11 +163,10 @@ void odeInit() {
     ode.input.exit_requested = false;
     Str const esc = strL(term_esc, 2);
     ode.output.colors = ·listOf(OdeRgbaColor, 0, 8);
-    OdeRgbaColor* const color_black = rgba(0, 0, 0, 255);
     for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
         for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
-            ode.output.screen.real.cells[x][y] = (OdeScreenCell) {.color = {.bg = color_black, .fg = color_black}};
-            ode.output.screen.prep.cells[x][y] = (OdeScreenCell) {.color = {.bg = color_black, .fg = color_black}};
+            ode.output.screen.real.cells[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
+            ode.output.screen.prep.cells[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
             ode.output.screen.term_esc_cursor_pos[x][y] =
                 str5(esc, uIntToStr(1 + y, 1, 10), strL(";", 1), uIntToStr(1 + x, 1, 10), strL("H", 1));
         }

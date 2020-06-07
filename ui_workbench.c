@@ -17,8 +17,8 @@
 void odeUiInitWorkbench() {
     ode.ui.main = odeUiCtlPanel(odeUiCtl(str("ode"), ode_uictl_dock_top | ode_uictl_dock_left, (OdePos) {5, 5}, (OdeSize) {90, 90}),
                                 ode_orient_none, ode_uictl_panel_none, 4);
-    ode.ui.main.base.color.bg = rgba(0xef, 0xe9, 0xe8, 0xff);
-    ode.ui.main.base.color.fg = rgba(0xa0, 0x60, 0x30, 0xff);
+    // ode.ui.main.base.color.bg = rgba(0xef, 0xe9, 0xe8, 0xff);
+    // ode.ui.main.base.color.fg = rgba(0xa0, 0x60, 0x30, 0xff);
 
     odeUiInitPanelDiags();
     odeUiInitPanelExplorer();
