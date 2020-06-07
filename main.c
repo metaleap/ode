@@ -7,7 +7,7 @@
 
 int main() {
     odeInit();
-    odeUiWorkbenchInit();
+    odeUiInitWorkbench();
 
     for (Bool repaint = true; !ode.input.exit_requested; repaint = odeProcessInput())
         if (repaint)

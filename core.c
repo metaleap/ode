@@ -14,7 +14,7 @@ typedef struct termios Termios;
 
 #define term_esc "\x1b["
 #define ode_output_screen_max_width 256
-#define ode_output_screen_max_height 64
+#define ode_output_screen_max_height 256
 #define ode_output_screen_buf_size (64 * ode_output_screen_max_width * ode_output_screen_max_height)
 #define ode_input_buf_size (1 * 1024 * 1024)
 
@@ -52,7 +52,20 @@ struct Ode {
             OdeSize size;
         } screen;
     } output;
-    OdeUiCtlPanel ui;
+    struct {
+        OdeUiCtlPanel main;
+        OdeUiCtlPanel sidebar_left;
+        OdeUiCtlPanel sidebar_right;
+        OdeUiCtlPanel sidebar_bottom;
+        OdeUiCtlPanel editors;
+        OdeUiCtlPanel panel_diags;
+        OdeUiCtlPanel panel_explorer;
+        OdeUiCtlPanel panel_extensions;
+        OdeUiCtlPanel panel_outline;
+        OdeUiCtlPanel panel_logs;
+        OdeUiCtlPanel panel_search;
+        OdeUiCtlPanel panel_terminals;
+    } ui;
 } ode;
 
 

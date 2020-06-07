@@ -9,14 +9,20 @@ typedef enum OdeGlyphStyleFlags {
     ode_glyphstyle_strikethru = 16,
 } OdeGlyphStyleFlags;
 
+typedef enum OdeOrientation {
+    ode_orient_none,
+    ode_orient_horiz,
+    ode_orient_vert,
+} OdeOrientation;
+
 typedef struct OdeSize {
-    UInt width;
-    UInt height;
+    U8 width;
+    U8 height;
 } OdeSize;
 
 typedef struct OdePos {
-    UInt x;
-    UInt y;
+    U8 x;
+    U8 y;
 } OdePos;
 
 typedef struct OdeRgbaColor {
