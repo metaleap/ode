@@ -26,28 +26,20 @@ typedef struct OdePos {
 } OdePos;
 
 typedef struct OdeRgbaColor {
-    U8 r;
-    U8 g;
-    U8 b;
-    U8 a;
+    Str ansi_esc;
+    union {
+        struct {
+            U8 r;
+            U8 g;
+            U8 b;
+            U8 a;
+        };
+        U32 rgba;
+    };
 } OdeRgbaColor;
+typedef ·ListOf(OdeRgbaColor) OdeRgbaColors;
 
 typedef struct OdeColored {
-    OdeRgbaColor bg;
-    OdeRgbaColor fg;
+    OdeRgbaColor* bg;
+    OdeRgbaColor* fg;
 } OdeColored;
-
-
-
-
-OdeRgbaColor rgba(U8 const r, U8 const g, U8 const b, U8 const a) {
-    return (OdeRgbaColor) {.r = r, .g = g, .b = b, .a = a};
-}
-
-OdeRgbaColor rgb0() {
-    return (OdeRgbaColor) {.a = 0xff};
-}
-
-Bool rgbaEq(OdeRgbaColor const* const c1, OdeRgbaColor const* const c2) {
-    return (c1->r == c2->r) && (c1->g == c2->g) && (c1->b == c2->b) && (c1->a == c2->a);
-}

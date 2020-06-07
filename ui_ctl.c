@@ -1,6 +1,6 @@
 #pragma once
-#include "common.c"
 #include "utils_libc_deps_basics.c"
+#include "common.c"
 
 typedef void (*OdeUiCtlRenderFunc)(void);
 
@@ -33,7 +33,7 @@ typedef ·ListOfPtrs(OdeUiCtl) OdeUiCtls;
 
 OdeUiCtl odeUiCtl(Str const text, OdeUiCtlDocking const dock, OdePos const pos, OdeSize const size) {
     OdeUiCtl ret_ctl = (OdeUiCtl) {.on = {.render = NULL},
-                                   .color = {.bg = (OdeRgbaColor) {0}, .fg = (OdeRgbaColor) {0}},
+                                   .color = {.bg = NULL, .fg = NULL},
                                    .style = ode_glyphstyle_none,
                                    .dirty = true,
                                    .disabled = false,

@@ -23,12 +23,17 @@ typedef struct termios Termios;
 typedef struct OdeScreenCell {
     OdeColored color;
     OdeGlyphStyleFlags style;
-    U32 rune;
+    union {
+        U32 u32;
+        U8 bytes[4];
+    } rune;
 } OdeScreenCell;
 
 typedef struct OdeScreenGrid {
     OdeScreenCell cells[ode_output_screen_max_width][ode_output_screen_max_height];
 } OdeScreenGrid;
+
+
 
 struct Ode {
     struct Init {
@@ -46,8 +51,9 @@ struct Ode {
             OdeScreenGrid real;
             OdeScreenGrid prep;
             OdeSize size;
-            CStr term_esc_cursor_pos[ode_output_screen_max_width][ode_output_screen_max_height];
+            Str term_esc_cursor_pos[ode_output_screen_max_width][ode_output_screen_max_height];
         } screen;
+        OdeRgbaColors colors;
     } output;
     struct Ui {
         OdeUiCtlPanel main;
@@ -67,6 +73,19 @@ struct Ode {
 
 
 
+
+OdeRgbaColor* rgba(U8 const r, U8 const g, U8 const b, U8 const a) {
+    OdeRgbaColor spec = (OdeRgbaColor) {.r = r, .g = g, .b = b, .a = a};
+    for (UInt i = 0; i < ode.output.colors.len; i += 1) {
+        OdeRgbaColor* const color = &ode.output.colors.at[i];
+        if (color->rgba == spec.rgba)
+            return &ode.output.colors.at[i];
+    }
+    spec.ansi_esc =
+        str7(strL(";2;", 3), uIntToStr(r, 1, 10), strL(";", 1), uIntToStr(g, 1, 10), strL(";", 1), uIntToStr(b, 1, 10), strL("m", 1));
+    ·append(ode.output.colors, spec);
+    return ·last(ode.output.colors);
+}
 
 static void termClearScreen() {
     write(STDOUT_FILENO, term_esc "2J", 2 + 2);
@@ -143,12 +162,14 @@ static void termInit() {
 void odeInit() {
     ode.input.exit_requested = false;
     Str const esc = strL(term_esc, 2);
+    ode.output.colors = ·listOf(OdeRgbaColor, 0, 8);
+    OdeRgbaColor* const color_black = rgba(0, 0, 0, 255);
     for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
         for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
-            ode.output.screen.real.cells[x][y] = (OdeScreenCell) {.color = {.bg = rgb0(), .fg = rgb0()}};
-            ode.output.screen.prep.cells[x][y] = (OdeScreenCell) {.color = {.bg = rgb0(), .fg = rgb0()}};
+            ode.output.screen.real.cells[x][y] = (OdeScreenCell) {.color = {.bg = color_black, .fg = color_black}};
+            ode.output.screen.prep.cells[x][y] = (OdeScreenCell) {.color = {.bg = color_black, .fg = color_black}};
             ode.output.screen.term_esc_cursor_pos[x][y] =
-                strZ(str5(esc, uIntToStr(1 + y, 1, 10), strL(";", 1), uIntToStr(1 + x, 1, 10), strL("H", 1)));
+                str5(esc, uIntToStr(1 + y, 1, 10), strL(";", 1), uIntToStr(1 + x, 1, 10), strL("H", 1));
         }
     updateScreenSize();
     termInit();
