@@ -7,6 +7,7 @@
 #include "utils_libc_deps_basics.c"
 #include "common.c"
 #include "ui_ctl_panel.c"
+#include "utils_libc_deps_mem.c"
 
 
 typedef struct termios Termios;
@@ -15,7 +16,6 @@ typedef struct termios Termios;
 #define term_esc "\x1b["
 #define ode_output_screen_max_width 256
 #define ode_output_screen_max_height 256
-#define ode_output_screen_buf_size (64 * ode_output_screen_max_width * ode_output_screen_max_height)
 #define ode_input_buf_size (1 * 1024 * 1024)
 
 
@@ -24,7 +24,6 @@ typedef struct OdeScreenCell {
     OdeColored color;
     OdeGlyphStyleFlags style;
     U32 rune;
-    Bool dirty;
 } OdeScreenCell;
 
 typedef struct OdeScreenGrid {
@@ -34,25 +33,23 @@ typedef struct OdeScreenGrid {
 struct Ode {
     struct Init {
         Strs argv_paths;
-        struct {
+        struct Term {
             Termios orig_attrs;
-            Bool orig_attrs_got;
+            Bool did_tcsetattr;
         } term;
     } init;
     struct Input {
-        U8 buf[ode_input_buf_size];
-        UInt n_bytes_read;
         Bool exit_requested;
     } input;
     struct Output {
-        U8 buf[ode_output_screen_buf_size];
         struct Screen {
-            OdeScreenGrid dst;
-            OdeScreenGrid src;
+            OdeScreenGrid real;
+            OdeScreenGrid prep;
             OdeSize size;
+            CStr term_esc_cursor_pos[ode_output_screen_max_width][ode_output_screen_max_height];
         } screen;
     } output;
-    struct {
+    struct Ui {
         OdeUiCtlPanel main;
         OdeUiCtlPanel sidebar_left;
         OdeUiCtlPanel sidebar_right;
@@ -72,11 +69,11 @@ struct Ode {
 
 
 static void termClearScreen() {
-    write(1, term_esc "2J", 2 + 2);
+    write(STDOUT_FILENO, term_esc "2J", 2 + 2);
 }
 
 static void termPositionCursorAtTopLeftCorner() {
-    write(1, term_esc "H", 2 + 1);
+    write(STDOUT_FILENO, term_esc "H", 2 + 1);
 }
 
 static void termClearAndPosTopLeft() {
@@ -84,32 +81,33 @@ static void termClearAndPosTopLeft() {
     termPositionCursorAtTopLeftCorner();
 }
 
-static void termAltEnter() {
-    write(1, term_esc "?47h", 2 + 4);
-    termClearAndPosTopLeft();
-}
-
-static void termAltLeave() {
-    write(1, term_esc "?47l", 2 + 4);
-    termClearAndPosTopLeft();
-}
-
-static void termRawOff() {
-    if (ode.init.term.orig_attrs_got)
+static void termRestore() {
+    if (ode.init.term.did_tcsetattr) {
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &ode.init.term.orig_attrs);
+        write(STDOUT_FILENO, term_esc "?47l", 2 + 4); // leave alt screen (entered in termInit)
+        write(STDOUT_FILENO, term_esc "?25h", 2 + 4); // show cursor (hidden in termInit)
+        write(STDOUT_FILENO, term_esc "u", 2 + 1);    // restore cursor pos (stored in termInit)
+    }
 }
 
-void odeDie(CStr const hint) {
-    termRawOff();
-    termAltLeave();
-    perror(hint);
-    abort();
+void odeDie(CStr const hint, Bool const got_errno) {
+    termRestore();
+    if (got_errno)
+        perror(hint);
+    abortWithBacktraceAndMsg(str(hint));
+}
+
+static void updateScreenSize() {
+    struct winsize win_size = {.ws_row = 0, .ws_col = 0};
+    if ((-1 == ioctl(1, TIOCGWINSZ, &win_size)) || (win_size.ws_row == 0) || (win_size.ws_col == 0))
+        odeDie("updateScreenSize: ioctl", true);
+    ode.output.screen.size.width = win_size.ws_col;
+    ode.output.screen.size.height = win_size.ws_row;
 }
 
 static void termRawOn() {
     if (-1 == tcgetattr(STDIN_FILENO, &ode.init.term.orig_attrs))
-        odeDie("termRawOn: tcgetattr");
-    ode.init.term.orig_attrs_got = true;
+        odeDie("termRawOn: tcgetattr", true);
 
     Termios new_attrs = ode.init.term.orig_attrs;
     new_attrs.c_iflag &= ~(BRKINT     // disable break-condition-to-signal-raising (Ctl+C)
@@ -127,44 +125,31 @@ static void termRawOn() {
     new_attrs.c_cc[VTIME] = 1;        // read() times out after 1/10 sec
 
     if (-1 == tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_attrs))
-        odeDie("termRawOn: tcsetattr");
-}
-
-static void updateScreenSize() {
-    struct winsize win_size = {.ws_row = 0, .ws_col = 0};
-    if ((-1 == ioctl(1, TIOCGWINSZ, &win_size)) || (win_size.ws_row == 0) || (win_size.ws_col == 0))
-        odeDie("updateScreenSize: ioctl");
-    ode.output.screen.size.width = win_size.ws_col;
-    ode.output.screen.size.height = win_size.ws_row;
+        odeDie("termRawOn: tcsetattr", true);
 }
 
 static void termInit() {
-    ode.init.term.orig_attrs_got = false;
+    atexit(termRestore);
+    ode.init.term.did_tcsetattr = false;
     termRawOn();
-    atexit(termAltLeave);
-    atexit(termRawOff);
-    updateScreenSize();
-    termAltEnter();
+    ode.init.term.did_tcsetattr = true;
+
+    write(STDOUT_FILENO, term_esc "s", 2 + 1);    // store cursor pos (restored in termRestore)
+    write(STDOUT_FILENO, term_esc "?25l", 2 + 4); // hide cursor (recovered in termRestore)
+    write(STDOUT_FILENO, term_esc "?47h", 2 + 4); // enter alt screen (left in termRestore)
+    termClearAndPosTopLeft();
 }
 
 void odeInit() {
-    { // init global shared mutable state `ode`
-        ode.input.exit_requested = false;
-        for (UInt i = 0; i < ode_output_screen_buf_size; i += 1)
-            ode.output.buf[i] = '?';
-        for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
-            for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
-                ode.output.screen.dst.cells[x][y] =
-                    (OdeScreenCell) {.rune = 0,
-                                     .dirty = false,
-                                     .style = ode_glyphstyle_none,
-                                     .color = {.bg = rgba(0x00, 0x00, 0x00, 0xff), .fg = rgba(0x00, 0x00, 0x00, 0xff)}};
-                ode.output.screen.src.cells[x][y] =
-                    (OdeScreenCell) {.rune = '?',
-                                     .dirty = false,
-                                     .style = ode_glyphstyle_none,
-                                     .color = {.bg = rgba(0x39, 0x32, 0x30, 0xff), .fg = rgba(0xb8, 0xb0, 0xa8, 0xff)}};
-            }
-    }
+    ode.input.exit_requested = false;
+    Str const esc = strL(term_esc, 2);
+    for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
+        for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
+            ode.output.screen.real.cells[x][y] = (OdeScreenCell) {.color = {.bg = rgb0(), .fg = rgb0()}};
+            ode.output.screen.prep.cells[x][y] = (OdeScreenCell) {.color = {.bg = rgb0(), .fg = rgb0()}};
+            ode.output.screen.term_esc_cursor_pos[x][y] =
+                strZ(str5(esc, uIntToStr(1 + y, 1, 10), strL(";", 1), uIntToStr(1 + x, 1, 10), strL("H", 1)));
+        }
+    updateScreenSize();
     termInit();
 }

@@ -1,4 +1,4 @@
-#define mem_max (1 * 1024 * 1024)
+#define mem_max (2 * 1024 * 1024)
 #include "utils_libc_deps_basics.c"
 #include "core.c"
 #include "input.c"
@@ -9,8 +9,8 @@ int main() {
     odeInit();
     odeUiInitWorkbench();
 
-    for (Bool repaint = true; !ode.input.exit_requested; repaint = odeProcessInput())
-        if (repaint)
+    for (Bool redraw = true; !ode.input.exit_requested; redraw = odeProcessInput())
+        if (redraw)
             odeRenderOutput();
 
     return 0;
