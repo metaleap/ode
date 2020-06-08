@@ -1,5 +1,5 @@
 #pragma once
-#include "utils_libc_deps_basics.c"
+#include "utils_std_basics.c"
 
 typedef enum OdeGlyphStyleFlags {
     ode_glyphstyle_none = 0,
@@ -28,6 +28,11 @@ typedef struct OdePos {
     U8 y;
 } OdePos;
 
+typedef struct OdeRect {
+    OdePos pos;
+    OdeSize size;
+} OdeRect;
+
 typedef struct OdeRgbaColor {
     Str ansi_esc;
     union {
@@ -47,3 +52,25 @@ typedef struct OdeColored {
     OdeRgbaColor* fg;
     OdeRgbaColor* ul3;
 } OdeColored;
+
+typedef struct OdeScreenCell {
+    OdeColored color;
+    OdeGlyphStyleFlags style;
+    union {
+        U32 u32;
+        U8 bytes[4];
+    } rune;
+} OdeScreenCell;
+
+
+OdePos pos(UInt x, UInt y) {
+    return (OdePos) {.x = x, .y = y};
+}
+
+OdeSize size(UInt width, UInt height) {
+    return (OdeSize) {.width = width, .height = height};
+}
+
+OdeRect rect(UInt x, UInt y, UInt width, UInt height) {
+    return (OdeRect) {.pos = pos(x, y), .size = size(width, height)};
+}

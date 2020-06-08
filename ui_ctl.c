@@ -1,8 +1,9 @@
 #pragma once
-#include "utils_libc_deps_basics.c"
+#include "utils_std_basics.c"
 #include "common.c"
 
-typedef void (*OdeUiCtlRenderFunc)(void);
+struct OdeUiCtl;
+typedef void (*OdeUiCtlRenderFunc)(struct OdeUiCtl const* const, OdeRect const* const);
 
 typedef enum OdeUiCtlDocking {
     ode_uictl_dock_none = 0,
@@ -14,16 +15,18 @@ typedef enum OdeUiCtlDocking {
 } OdeUiCtlDocking;
 
 typedef struct OdeUiCtl {
-    OdeSize size;
-    OdePos pos;
+    OdeRect rect;
     Str text;
     OdeColored color;
     OdeGlyphStyleFlags style;
     OdeUiCtlDocking dock;
-    Bool dirty;
-    Bool disabled;
-    Bool visible;
-    Bool focused;
+    struct {
+        Bool dirty : 1;
+        Bool disabled : 1;
+        Bool visible : 1;
+        Bool focused : 1;
+        Bool has_ctls : 1;
+    };
     struct {
         OdeUiCtlRenderFunc render;
     } on;
@@ -31,7 +34,7 @@ typedef struct OdeUiCtl {
 typedef ·ListOfPtrs(OdeUiCtl) OdeUiCtls;
 
 
-OdeUiCtl odeUiCtl(Str const text, OdeUiCtlDocking const dock, OdePos const pos, OdeSize const size) {
-    OdeUiCtl ret_ctl = (OdeUiCtl) {.dirty = true, .visible = true, .text = text, .dock = dock, .pos = pos, .size = size};
+OdeUiCtl odeUiCtl(Str const text, OdeUiCtlDocking const dock, OdeRect rect) {
+    OdeUiCtl ret_ctl = (OdeUiCtl) {.dirty = true, .visible = true, .text = text, .dock = dock, .rect = rect};
     return ret_ctl;
 }

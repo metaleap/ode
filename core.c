@@ -4,10 +4,11 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
-#include "utils_libc_deps_basics.c"
+
+#include "utils_std_basics.c"
 #include "common.c"
 #include "ui_ctl_panel.c"
-#include "utils_libc_deps_mem.c"
+#include "utils_std_mem.c"
 
 
 typedef struct termios Termios;
@@ -17,22 +18,6 @@ typedef struct termios Termios;
 #define ode_output_screen_max_width 256
 #define ode_output_screen_max_height 256
 #define ode_input_buf_size (1 * 1024 * 1024)
-
-
-
-typedef struct OdeScreenCell {
-    OdeColored color;
-    OdeGlyphStyleFlags style;
-    union {
-        U32 u32;
-        U8 bytes[4];
-    } rune;
-} OdeScreenCell;
-
-typedef struct OdeScreenGrid {
-    OdeScreenCell cells[ode_output_screen_max_width][ode_output_screen_max_height];
-} OdeScreenGrid;
-
 
 
 struct Ode {
@@ -48,8 +33,8 @@ struct Ode {
     } input;
     struct Output {
         struct Screen {
-            OdeScreenGrid real;
-            OdeScreenGrid prep;
+            OdeScreenCell real[ode_output_screen_max_width][ode_output_screen_max_height];
+            OdeScreenCell prep[ode_output_screen_max_width][ode_output_screen_max_height];
             OdeSize size;
             Str term_esc_cursor_pos[ode_output_screen_max_width][ode_output_screen_max_height];
         } screen;
@@ -57,17 +42,18 @@ struct Ode {
     } output;
     struct Ui {
         OdeUiCtlPanel main;
+        OdeUiCtlPanel statusbar;
         OdeUiCtlPanel sidebar_left;
         OdeUiCtlPanel sidebar_right;
         OdeUiCtlPanel sidebar_bottom;
         OdeUiCtlPanel editors;
-        OdeUiCtlPanel panel_diags;
-        OdeUiCtlPanel panel_explorer;
-        OdeUiCtlPanel panel_extensions;
-        OdeUiCtlPanel panel_outline;
-        OdeUiCtlPanel panel_logs;
-        OdeUiCtlPanel panel_search;
-        OdeUiCtlPanel panel_terminals;
+        OdeUiCtlPanel view_explorer;
+        OdeUiCtlPanel view_extensions;
+        OdeUiCtlPanel view_search;
+        OdeUiCtlPanel view_outline;
+        OdeUiCtlPanel view_diags;
+        OdeUiCtlPanel view_logs;
+        OdeUiCtlPanel view_terminals;
     } ui;
 } ode;
 
@@ -120,8 +106,8 @@ static void updateScreenSize() {
     struct winsize win_size = {.ws_row = 0, .ws_col = 0};
     if ((-1 == ioctl(1, TIOCGWINSZ, &win_size)) || (win_size.ws_row == 0) || (win_size.ws_col == 0))
         odeDie("updateScreenSize: ioctl", true);
-    ode.output.screen.size.width = win_size.ws_col;
-    ode.output.screen.size.height = win_size.ws_row;
+    ode.output.screen.size.width = win_size.ws_col - 11;
+    ode.output.screen.size.height = win_size.ws_row - 3;
 }
 
 static void termRawOn() {
@@ -165,8 +151,8 @@ void odeInit() {
     ode.output.colors = ·listOf(OdeRgbaColor, 0, 8);
     for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
         for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
-            ode.output.screen.real.cells[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
-            ode.output.screen.prep.cells[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
+            ode.output.screen.real[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
+            ode.output.screen.prep[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
             ode.output.screen.term_esc_cursor_pos[x][y] =
                 str5(esc, uIntToStr(1 + y, 1, 10), strL(";", 1), uIntToStr(1 + x, 1, 10), strL("H", 1));
         }

@@ -1,6 +1,6 @@
 #pragma once
-#include "utils_libc_deps_basics.c"
-#include "utils_libc_deps_mem.c"
+#include "utils_std_basics.c"
+#include "utils_std_mem.c"
 #include "common.c"
 #include "ui_ctl.c"
 
@@ -18,7 +18,8 @@ typedef struct OdeUiCtlPanel {
     OdeUiCtlPanelMode mode;
 } OdeUiCtlPanel;
 
-OdeUiCtlPanel odeUiCtlPanel(OdeUiCtl const base, OdeOrientation orientation, OdeUiCtlPanelMode mode, UInt const ctls_capacity) {
+OdeUiCtlPanel odeUiCtlPanel(OdeUiCtl base, OdeOrientation orientation, OdeUiCtlPanelMode mode, UInt const ctls_capacity) {
+    base.has_ctls = true;
     return (OdeUiCtlPanel) {
         .base = base, .ctl_idx = 0, .ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, 0, ctls_capacity), .orient = orientation, .mode = mode};
 }
