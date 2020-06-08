@@ -3,7 +3,7 @@
 #include "common.c"
 
 struct OdeUiCtl;
-typedef void (*OdeUiCtlRenderFunc)(struct OdeUiCtl const* const, OdeRect const* const);
+typedef void (*OdeUiCtlRenderFunc)(struct OdeUiCtl*, OdeRect*);
 
 typedef enum OdeUiCtlDocking {
     ode_uictl_dock_none = 0,

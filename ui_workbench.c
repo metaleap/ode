@@ -30,9 +30,9 @@ void odeUiInitWorkbench() {
     odeUiInitViewTerminals();
     odeUiInitSidebars();
 
-    // ·append(ode.ui.main.ctls, &ode.ui.statusbar.base);
-    // ·append(ode.ui.main.ctls, &ode.ui.sidebar_left.base);
-    // ·append(ode.ui.main.ctls, &ode.ui.sidebar_right.base);
-    // ·append(ode.ui.main.ctls, &ode.ui.sidebar_bottom.base);
+    ·append(ode.ui.main.ctls, &ode.ui.statusbar.base);
+    ·append(ode.ui.main.ctls, &ode.ui.sidebar_left.base);
+    ·append(ode.ui.main.ctls, &ode.ui.sidebar_right.base);
+    ·append(ode.ui.main.ctls, &ode.ui.sidebar_bottom.base);
     // ·append(ode.ui.main.ctls, &ode.ui.editors.base);
 }

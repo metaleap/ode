@@ -18,8 +18,20 @@ typedef struct OdeUiCtlPanel {
     OdeUiCtlPanelMode mode;
 } OdeUiCtlPanel;
 
+OdeRect odeRender(OdeUiCtl* const ctl, OdeRect const screen_rect);
+void odeRenderText(Str const text, OdeRect const* const screen_rect);
+
+static void onRender(OdeUiCtl* ctl_panel, OdeRect* screen_rect) {
+    OdeUiCtlPanel* const this = (OdeUiCtlPanel*)ctl_panel;
+    OdeRect rect = *screen_rect;
+    for (UInt i = 0; i < this->ctls.len; i += 1)
+        rect = odeRender(this->ctls.at[i], rect);
+    odeRenderText(ctl_panel->text, &rect);
+}
+
 OdeUiCtlPanel odeUiCtlPanel(OdeUiCtl base, OdeOrientation orientation, OdeUiCtlPanelMode mode, UInt const ctls_capacity) {
     base.has_ctls = true;
+    base.on.render = onRender;
     return (OdeUiCtlPanel) {
         .base = base, .ctl_idx = 0, .ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, 0, ctls_capacity), .orient = orientation, .mode = mode};
 }

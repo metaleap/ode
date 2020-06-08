@@ -1,5 +1,6 @@
 #pragma once
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -37,6 +38,7 @@ struct Ode {
             OdeScreenCell prep[ode_output_screen_max_width][ode_output_screen_max_height];
             OdeSize size;
             Str term_esc_cursor_pos[ode_output_screen_max_width][ode_output_screen_max_height];
+            Bool resized;
         } screen;
         OdeRgbaColors colors;
     } output;
@@ -106,8 +108,13 @@ static void updateScreenSize() {
     struct winsize win_size = {.ws_row = 0, .ws_col = 0};
     if ((-1 == ioctl(1, TIOCGWINSZ, &win_size)) || (win_size.ws_row == 0) || (win_size.ws_col == 0))
         odeDie("updateScreenSize: ioctl", true);
-    ode.output.screen.size.width = win_size.ws_col - 11;
-    ode.output.screen.size.height = win_size.ws_row - 3;
+    ode.output.screen.size.width = (win_size.ws_col >= ode_output_screen_max_width) ? (ode_output_screen_max_width - 1) : win_size.ws_col;
+    ode.output.screen.size.height = (win_size.ws_row >= ode_output_screen_max_height) ? (ode_output_screen_max_height - 1) : win_size.ws_row;
+}
+
+static void termOnResized() {
+    ode.output.screen.resized = true;
+    updateScreenSize();
 }
 
 static void termRawOn() {
@@ -149,6 +156,7 @@ void odeInit() {
     ode.input.exit_requested = false;
     Str const esc = strL(term_esc, 2);
     ode.output.colors = ·listOf(OdeRgbaColor, 0, 8);
+    ode.output.screen.resized = false;
     for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
         for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
             ode.output.screen.real[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
@@ -157,5 +165,7 @@ void odeInit() {
                 str5(esc, uIntToStr(1 + y, 1, 10), strL(";", 1), uIntToStr(1 + x, 1, 10), strL("H", 1));
         }
     updateScreenSize();
+    if (signal(SIGWINCH, termOnResized) == SIG_ERR)
+        odeDie("odeInit: signal", true);
     termInit();
 }

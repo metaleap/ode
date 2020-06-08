@@ -9,9 +9,13 @@ int main() {
     odeInit();
     odeUiInitWorkbench();
 
-    for (Bool redraw = true; !ode.input.exit_requested; redraw = odeProcessInput())
+    Bool redraw = true;
+    while (!ode.input.exit_requested) {
         if (redraw)
-            odeRenderOutput();
+            odeRenderOutput(ode.output.screen.size);
+        redraw = ode.output.screen.resized || odeProcessInput() || ode.output.screen.resized;
+        ode.output.screen.resized = false;
+    }
 
     return 0;
 }
