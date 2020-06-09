@@ -3,6 +3,7 @@
 #include "utils_std_mem.c"
 #include "common.c"
 #include "ui_ctl.c"
+#include "output.c"
 
 typedef enum OdeUiCtlPanelMode {
     ode_uictl_panel_none,
@@ -17,9 +18,6 @@ typedef struct OdeUiCtlPanel {
     OdeUiCtlPanelMode mode;
 } OdeUiCtlPanel;
 
-OdeRect odeRender(OdeUiCtl* const ctl, OdeRect const screen_rect);
-void odeRenderText(Str const text, OdeRect const* const screen_rect, Bool const clear_full_line);
-
 void odeUiCtlPanelOnRender(OdeUiCtl* ctl_panel, OdeRect* screen_rect) {
     OdeRect rect = *screen_rect;
 
@@ -32,8 +30,10 @@ void odeUiCtlPanelOnRender(OdeUiCtl* ctl_panel, OdeRect* screen_rect) {
         }
         ctl->dirty = false;
     }
-    if (ctl_panel->ctls.len == 0)
-        odeRenderText(ctl_panel->text, &rect, true);
+    if (ctl_panel->ctls.len == 0) {
+        odeScreenClearRectText(&rect);
+        odeRenderText(ctl_panel->text, &rect, false);
+    }
 }
 
 Bool odeUiCtlPanelOnInput(OdeUiCtl* ctl_panel, Str const bytes) {
@@ -47,9 +47,11 @@ Bool odeUiCtlPanelOnInput(OdeUiCtl* ctl_panel, Str const bytes) {
     return dirty;
 }
 
-OdeUiCtlPanel odeUiCtlPanel(OdeUiCtl base, OdeOrientation orientation, OdeUiCtlPanelMode mode, UInt const ctls_capacity) {
+OdeUiCtlPanel* odeUiCtlPanel(OdeUiCtl base, OdeOrientation orientation, OdeUiCtlPanelMode mode, UInt const ctls_capacity) {
+    OdeUiCtlPanel* ret_panel = ·new(OdeUiCtlPanel);
     base.on.render = odeUiCtlPanelOnRender;
     base.on.input = odeUiCtlPanelOnInput;
     base.ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, 0, ctls_capacity);
-    return (OdeUiCtlPanel) {.base = base, .ctl_idx = 0, .orient = orientation, .mode = mode};
+    *ret_panel = (OdeUiCtlPanel) {.base = base, .ctl_idx = 0, .orient = orientation, .mode = mode};
+    return ret_panel;
 }

@@ -8,72 +8,14 @@
 
 #include "utils_std_basics.c"
 #include "common.c"
-#include "ui_ctl_panel.c"
-#include "utils_std_mem.c"
 
 
 typedef struct termios Termios;
 
 
 #define term_esc "\x1b["
-#define ode_output_screen_max_width 256
-#define ode_output_screen_max_height 256
-#define ode_input_buf_size (1 * 1024 * 1024)
 
 
-struct Ode {
-    struct Init {
-        Strs argv_paths;
-        struct Term {
-            Termios orig_attrs;
-            Bool did_tcsetattr;
-        } term;
-    } init;
-    struct Input {
-        Bool exit_requested;
-    } input;
-    struct Output {
-        struct Screen {
-            OdeScreenCell real[ode_output_screen_max_width][ode_output_screen_max_height];
-            OdeScreenCell prep[ode_output_screen_max_width][ode_output_screen_max_height];
-            OdeSize size;
-            Str term_esc_cursor_pos[ode_output_screen_max_width][ode_output_screen_max_height];
-            Bool resized;
-        } screen;
-        OdeRgbaColors colors;
-    } output;
-    struct Ui {
-        OdeUiCtlPanel main;
-        OdeUiCtlPanel statusbar;
-        OdeUiCtlPanel sidebar_left;
-        OdeUiCtlPanel sidebar_right;
-        OdeUiCtlPanel sidebar_bottom;
-        OdeUiCtlPanel editors;
-        OdeUiCtlPanel view_explorer;
-        OdeUiCtlPanel view_extensions;
-        OdeUiCtlPanel view_search;
-        OdeUiCtlPanel view_outline;
-        OdeUiCtlPanel view_diags;
-        OdeUiCtlPanel view_logs;
-        OdeUiCtlPanel view_terminals;
-    } ui;
-} ode;
-
-
-
-
-OdeRgbaColor* rgba(U8 const r, U8 const g, U8 const b, U8 const a) {
-    OdeRgbaColor spec = (OdeRgbaColor) {.r = r, .g = g, .b = b, .a = a};
-    for (UInt i = 0; i < ode.output.colors.len; i += 1) {
-        OdeRgbaColor* const color = &ode.output.colors.at[i];
-        if (color->rgba == spec.rgba)
-            return &ode.output.colors.at[i];
-    }
-    spec.ansi_esc =
-        str7(strL(";2;", 3), uIntToStr(r, 1, 10), strL(";", 1), uIntToStr(g, 1, 10), strL(";", 1), uIntToStr(b, 1, 10), strL("m", 1));
-    ·append(ode.output.colors, spec);
-    return ·last(ode.output.colors);
-}
 
 static void termClearScreen() {
     write(STDOUT_FILENO, term_esc "2J", 2 + 2);
@@ -113,9 +55,8 @@ static void updateScreenSize() {
 }
 
 static void termOnResized() {
-    ode.output.screen.resized = true;
+    ode.input.screen_resized = true;
     updateScreenSize();
-    odeUiCtlSetDirty(&ode.ui.main.base, true, true);
 }
 
 static void termRawOn() {
@@ -154,10 +95,14 @@ static void termInit() {
 }
 
 void odeInit() {
+    ode.stats.last_output_payload = 0;
+    ode.stats.num_renders = 0;
+    ode.stats.num_outputs = 0;
     ode.input.exit_requested = false;
-    Str const esc = strL(term_esc, 2);
+    ode.input.screen_resized = false;
     ode.output.colors = ·listOf(OdeRgbaColor, 0, 8);
-    ode.output.screen.resized = false;
+
+    Str const esc = strL(term_esc, 2);
     for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
         for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
             ode.output.screen.real[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};

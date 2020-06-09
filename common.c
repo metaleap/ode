@@ -1,5 +1,12 @@
 #pragma once
+#include <termios.h>
+
 #include "utils_std_basics.c"
+#include "utils_std_mem.c"
+
+#define ode_output_screen_max_width 256
+#define ode_output_screen_max_height 256
+#define ode_input_buf_size (1 * 1024 * 1024)
 
 typedef enum OdeGlyphStyleFlags {
     ode_glyphstyle_none = 0,
@@ -62,6 +69,66 @@ typedef struct OdeScreenCell {
     } rune;
 } OdeScreenCell;
 
+struct OdeUiCtlPanel;
+
+typedef struct termios Termios;
+struct Ode {
+    struct Init {
+        Strs argv_paths;
+        struct Term {
+            Termios orig_attrs;
+            Bool did_tcsetattr;
+        } term;
+    } init;
+    struct Stats {
+        UInt num_renders;
+        UInt num_outputs;
+        UInt last_output_payload;
+    } stats;
+    struct Input {
+        Bool exit_requested;
+        Bool screen_resized;
+    } input;
+    struct Output {
+        struct Screen {
+            OdeScreenCell real[ode_output_screen_max_width][ode_output_screen_max_height];
+            OdeScreenCell prep[ode_output_screen_max_width][ode_output_screen_max_height];
+            OdeSize size;
+            Str term_esc_cursor_pos[ode_output_screen_max_width][ode_output_screen_max_height];
+        } screen;
+        OdeRgbaColors colors;
+    } output;
+    struct Ui {
+        struct OdeUiCtlPanel* main;
+        struct OdeUiCtlPanel* statusbar;
+        struct OdeUiCtlPanel* sidebar_left;
+        struct OdeUiCtlPanel* sidebar_right;
+        struct OdeUiCtlPanel* sidebar_bottom;
+        struct OdeUiCtlPanel* editors;
+        struct OdeUiCtlPanel* view_explorer;
+        struct OdeUiCtlPanel* view_extensions;
+        struct OdeUiCtlPanel* view_search;
+        struct OdeUiCtlPanel* view_outline;
+        struct OdeUiCtlPanel* view_diags;
+        struct OdeUiCtlPanel* view_logs;
+        struct OdeUiCtlPanel* view_terminals;
+    } ui;
+} ode;
+
+void odeDie(CStr const hint, Bool const got_errno);
+
+OdeRgbaColor* rgba(U8 const r, U8 const g, U8 const b, U8 const a) {
+    OdeRgbaColor spec = (OdeRgbaColor) {.r = r, .g = g, .b = b, .a = a};
+    for (UInt i = 0; i < ode.output.colors.len; i += 1) {
+        OdeRgbaColor* const color = &ode.output.colors.at[i];
+        if (color->rgba == spec.rgba)
+            return &ode.output.colors.at[i];
+    }
+    spec.ansi_esc =
+        str7(strL(";2;", 3), uIntToStr(r, 1, 10), strL(";", 1), uIntToStr(g, 1, 10), strL(";", 1), uIntToStr(b, 1, 10), strL("m", 1));
+    ·append(ode.output.colors, spec);
+    return ·last(ode.output.colors);
+}
 
 OdePos pos(UInt x, UInt y) {
     return (OdePos) {.x = x, .y = y};

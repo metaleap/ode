@@ -5,6 +5,12 @@
 #include "utils_std_basics.c"
 #include "utils_std_mem.c"
 
+void odeScreenClearRectText(OdeRect const* const rect) {
+    for (UInt x = rect->pos.x, x_end = (rect->pos.x + rect->size.width); x < x_end; x += 1)
+        for (UInt y = rect->pos.y, y_end = (rect->pos.y + rect->size.height); y < y_end; y += 1)
+            ode.output.screen.prep[x][y].rune.u32 = 0;
+}
+
 void odeRenderText(Str const text, OdeRect const* const screen_rect, Bool const clear_full_line) {
     OdePos pos = screen_rect->pos;
     if (clear_full_line)
@@ -76,7 +82,7 @@ OdeRect odeRender(OdeUiCtl* const ctl, OdeRect const screen_rect) {
 
 
 
-void odeRenderOutput(OdeSize const ode_output_screen_size) {
+void odeRenderOutput(OdeUiCtl* ode_ui_main, OdeSize const ode_output_screen_size) {
 #define ode_output_screen_buf_size (64 * ode_output_screen_max_width * ode_output_screen_max_height)
     static U8 out_buf[ode_output_screen_buf_size];
     static Bool cells_dirty[ode_output_screen_max_width][ode_output_screen_max_height];
@@ -84,13 +90,17 @@ void odeRenderOutput(OdeSize const ode_output_screen_size) {
     static OdeSize screen_size = (OdeSize) {0, 0};
     Bool const force = (screen_size.width != ode_output_screen_size.width) || (screen_size.height != ode_output_screen_size.height);
     screen_size = ode_output_screen_size;
-    if (force)
+    if (force) {
+        odeUiCtlSetDirty(ode_ui_main, true, true);
         for (UInt x = 0; x < screen_size.width; x += 1)
             for (UInt y = 0; y < screen_size.height; y += 1) {
                 ode.output.screen.prep[x][y].rune.u32 = 0;
                 cells_dirty[x][y] = true;
             }
-    odeRender(&ode.ui.main.base, rect(0, 0, screen_size.width, screen_size.height));
+    }
+    if (ode_ui_main->dirty)
+        ode.stats.num_renders += 1;
+    odeRender(ode_ui_main, rect(0, 0, screen_size.width, screen_size.height));
 
     Bool got_dirty_cells = force;
     if (!got_dirty_cells)
@@ -110,6 +120,7 @@ void odeRenderOutput(OdeSize const ode_output_screen_size) {
         buf.len = strCopyTo((Str) {.at = buf.at, .len = buf.len}, (·the·str)).len;                                                           \
     } while (0)
 
+        ode.stats.num_outputs += 1;
         OdePos last = {.x = 0, .y = 0};
         for (UInt y = 0; y < screen_size.height; y += 1)
             for (UInt x = 0; x < screen_size.width; x += 1)
@@ -174,8 +185,10 @@ void odeRenderOutput(OdeSize const ode_output_screen_size) {
                     last = pos(x, y);
                 }
 
-        // odeDie(strZ(uIntToStr(buf.len, 1, 10)), false);
-        if ((buf.len > 0) && (write(STDOUT_FILENO, buf.at, buf.len) != (Int)buf.len))
-            odeDie("odeRenderOutput: write", true);
+        if (buf.len > 0) {
+            ode.stats.last_output_payload = buf.len;
+            if (write(STDOUT_FILENO, buf.at, buf.len) != (Int)buf.len)
+                odeDie("odeRenderOutput: write", true);
+        }
     }
 }

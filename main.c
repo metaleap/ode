@@ -1,3 +1,4 @@
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #define mem_bss_max (2 * 1024 * 1024)
 #include "utils_std_basics.c"
 #include "core.c"
@@ -12,9 +13,9 @@ int main() {
     Bool redraw = true;
     while (!ode.input.exit_requested) {
         if (redraw)
-            odeRenderOutput(ode.output.screen.size);
-        redraw = ode.output.screen.resized || odeProcessInput() || ode.output.screen.resized;
-        ode.output.screen.resized = false;
+            odeRenderOutput(&ode.ui.main->base, ode.output.screen.size);
+        redraw = ode.input.screen_resized || odeProcessInput() || ode.input.screen_resized;
+        ode.input.screen_resized = false;
     }
 
     return 0;

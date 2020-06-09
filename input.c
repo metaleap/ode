@@ -1,5 +1,6 @@
 #pragma once
 #include "core.c"
+#include "ui_ctl_panel.c"
 
 Bool odeProcessInput() {
     static U8 input_buf[ode_input_buf_size];
@@ -15,5 +16,5 @@ Bool odeProcessInput() {
         if (input_buf[i] == (0x1f & 'q'))
             ode.input.exit_requested = true;
     return (!ode.input.exit_requested) && (n_bytes_read > 0)
-           && ode.ui.main.base.on.input(&ode.ui.main.base, (Str) {.at = input_buf, .len = (UInt)n_bytes_read});
+           && ode.ui.main->base.on.input(&ode.ui.main->base, (Str) {.at = input_buf, .len = (UInt)n_bytes_read});
 }
