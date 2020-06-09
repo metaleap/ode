@@ -5,8 +5,11 @@
 #include "utils_std_basics.c"
 #include "utils_std_mem.c"
 
-void odeRenderText(Str const text, OdeRect const* const screen_rect) {
+void odeRenderText(Str const text, OdeRect const* const screen_rect, Bool const clear_full_line) {
     OdePos pos = screen_rect->pos;
+    if (clear_full_line)
+        for (UInt x = screen_rect->pos.x + text.len; x < (screen_rect->pos.x + screen_rect->size.width); x += 1)
+            ode.output.screen.prep[x][pos.y].rune.u32 = 0;
     for (UInt i = 0; i < text.len; i += 1)
         if (((pos.x + 1) == (screen_rect->pos.x + screen_rect->size.width)) || text.at[i] == '\n') {
             Str const ellipsis = str("…");
@@ -57,19 +60,17 @@ OdeRect odeRender(OdeUiCtl* const ctl, OdeRect const screen_rect) {
         if ((dst_rect.pos.x < (screen_rect.pos.x + screen_rect.size.width))
             && (dst_rect.pos.y < (screen_rect.pos.y + screen_rect.size.height))) {
             OdePos dst_pos_max = pos(dst_rect.pos.x + dst_rect.size.width, dst_rect.pos.y + dst_rect.size.height);
-            for (UInt x = dst_rect.pos.x; x < dst_pos_max.x; x += 1)
-                for (UInt y = dst_rect.pos.y; y < dst_pos_max.y; y += 1) {
-                    OdeScreenCell* cell = &ode.output.screen.prep[x][y];
-                    cell->color = ctl->color;
-                    cell->style = ctl->style;
-                }
-
-            if (ctl->on.render != NULL)
-                ctl->on.render(ctl, &dst_rect);
-            else
-                odeRenderText(ctl->text, &dst_rect);
+            if (ctl->ctls.len == 0)
+                for (UInt x = dst_rect.pos.x; x < dst_pos_max.x; x += 1)
+                    for (UInt y = dst_rect.pos.y; y < dst_pos_max.y; y += 1) {
+                        OdeScreenCell* cell = &ode.output.screen.prep[x][y];
+                        cell->color = odeUiCtlEffectiveColors(ctl);
+                        cell->style = ctl->style;
+                    }
+            ctl->on.render(ctl, &dst_rect);
         }
     }
+    ctl->dirty = false;
     return ret_rect;
 }
 
@@ -78,7 +79,7 @@ OdeRect odeRender(OdeUiCtl* const ctl, OdeRect const screen_rect) {
 void odeRenderOutput(OdeSize const ode_output_screen_size) {
 #define ode_output_screen_buf_size (64 * ode_output_screen_max_width * ode_output_screen_max_height)
     static U8 out_buf[ode_output_screen_buf_size];
-    static Bool dirty[ode_output_screen_max_width][ode_output_screen_max_height];
+    static Bool cells_dirty[ode_output_screen_max_width][ode_output_screen_max_height];
     static OdeScreenCell state = {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
     static OdeSize screen_size = (OdeSize) {0, 0};
     Bool const force = (screen_size.width != ode_output_screen_size.width) || (screen_size.height != ode_output_screen_size.height);
@@ -87,7 +88,7 @@ void odeRenderOutput(OdeSize const ode_output_screen_size) {
         for (UInt x = 0; x < screen_size.width; x += 1)
             for (UInt y = 0; y < screen_size.height; y += 1) {
                 ode.output.screen.prep[x][y].rune.u32 = 0;
-                dirty[x][y] = true;
+                cells_dirty[x][y] = true;
             }
     odeRender(&ode.ui.main.base, rect(0, 0, screen_size.width, screen_size.height));
 
@@ -97,9 +98,9 @@ void odeRenderOutput(OdeSize const ode_output_screen_size) {
             for (UInt y = 0; y < screen_size.height; y += 1) {
                 OdeScreenCell* prep = &ode.output.screen.prep[x][y];
                 OdeScreenCell* real = &ode.output.screen.real[x][y];
-                dirty[x][y] = (prep->rune.u32 != real->rune.u32) || (prep->style != real->style) || (prep->color.bg != real->color.bg)
-                              || (prep->color.fg != real->color.fg);
-                got_dirty_cells |= dirty[x][y];
+                cells_dirty[x][y] = (prep->rune.u32 != real->rune.u32) || (prep->style != real->style) || (prep->color.bg != real->color.bg)
+                                    || (prep->color.fg != real->color.fg);
+                got_dirty_cells |= cells_dirty[x][y];
             }
 
     if (got_dirty_cells) {
@@ -112,7 +113,7 @@ void odeRenderOutput(OdeSize const ode_output_screen_size) {
         OdePos last = {.x = 0, .y = 0};
         for (UInt y = 0; y < screen_size.height; y += 1)
             for (UInt x = 0; x < screen_size.width; x += 1)
-                if (dirty[x][y]) {
+                if (cells_dirty[x][y]) {
                     OdeScreenCell* const cell = &ode.output.screen.prep[x][y];
 
                     // position cursor, unless we're next to previous
@@ -153,7 +154,7 @@ void odeRenderOutput(OdeSize const ode_output_screen_size) {
                             CStr const ansi_reset = (i == 2) ? (term_esc "59m") : (i == 1) ? (term_esc "39m") : (term_esc "49m");
                             CStr const ansi_set = (i == 2) ? (term_esc "58") : (i == 1) ? (term_esc "38") : (term_esc "48");
                             *col_cur = col_cell;
-                            if (col_cell == NULL)
+                            if (col_cell->rgba == 0)
                                 ·out(strL(ansi_reset, 2 + 3));
                             else {
                                 ·out(strL(ansi_set, 2 + 2));

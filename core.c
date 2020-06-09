@@ -115,6 +115,7 @@ static void updateScreenSize() {
 static void termOnResized() {
     ode.output.screen.resized = true;
     updateScreenSize();
+    odeUiCtlSetDirty(&ode.ui.main.base, true, true);
 }
 
 static void termRawOn() {

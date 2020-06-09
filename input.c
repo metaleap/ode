@@ -11,8 +11,9 @@ Bool odeProcessInput() {
             odeDie("odeProcessInput: read", true);
     }
 
-    for (UInt i = 0, max = (UInt)n_bytes_read; i < max; i += 1)
+    for (UInt i = 0, max = (UInt)n_bytes_read; i < max && !ode.input.exit_requested; i += 1)
         if (input_buf[i] == (0x1f & 'q'))
             ode.input.exit_requested = true;
-    return false;
+    return (!ode.input.exit_requested) && (n_bytes_read > 0)
+           && ode.ui.main.base.on.input(&ode.ui.main.base, (Str) {.at = input_buf, .len = (UInt)n_bytes_read});
 }
