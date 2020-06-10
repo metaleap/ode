@@ -4,11 +4,11 @@
 #include "core.c"
 #include "input.c"
 #include "output.c"
-#include "ui_workbench.c"
+#include "ui_main.c"
 
 int main() {
     odeInit();
-    odeUiInitWorkbench();
+    odeUiInitMain();
 
     Bool redraw = true;
     while (!ode.input.exit_requested) {

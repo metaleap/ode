@@ -69,6 +69,7 @@ typedef struct OdeScreenCell {
     } rune;
 } OdeScreenCell;
 
+struct OdeUiCtl;
 struct OdeUiCtlPanel;
 
 typedef struct termios Termios;
@@ -141,3 +142,7 @@ OdeSize size(UInt width, UInt height) {
 OdeRect rect(UInt x, UInt y, UInt width, UInt height) {
     return (OdeRect) {.pos = pos(x, y), .size = size(width, height)};
 }
+
+void odeScreenClearRectText(OdeRect const* const rect);
+void odeRenderText(Str const text, OdeRect const* const screen_rect, Bool const clear_full_line);
+OdeRect odeRender(struct OdeUiCtl* const ctl, OdeRect const screen_rect);

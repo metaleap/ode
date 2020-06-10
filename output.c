@@ -2,6 +2,7 @@
 #include "common.c"
 #include "core.c"
 #include "ui_ctl.c"
+#include "ui_main.c"
 #include "utils_std_basics.c"
 #include "utils_std_mem.c"
 
@@ -88,9 +89,11 @@ void odeRenderOutput(OdeUiCtl* ode_ui_main, OdeSize const ode_output_screen_size
     static Bool cells_dirty[ode_output_screen_max_width][ode_output_screen_max_height];
     static OdeScreenCell state = {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
     static OdeSize screen_size = (OdeSize) {0, 0};
-    Bool const force = (screen_size.width != ode_output_screen_size.width) || (screen_size.height != ode_output_screen_size.height);
-    screen_size = ode_output_screen_size;
-    if (force) {
+    Bool const resized = (screen_size.width != ode_output_screen_size.width) || (screen_size.height != ode_output_screen_size.height);
+    if (resized) {
+        if (screen_size.height != 0 && screen_size.width != 0) // actual-resize instead of mere init?
+            odeUiMainOnResized(&screen_size, &ode_output_screen_size);
+        screen_size = ode_output_screen_size;
         odeUiCtlSetDirty(ode_ui_main, true, true);
         for (UInt x = 0; x < screen_size.width; x += 1)
             for (UInt y = 0; y < screen_size.height; y += 1) {
@@ -102,7 +105,7 @@ void odeRenderOutput(OdeUiCtl* ode_ui_main, OdeSize const ode_output_screen_size
         ode.stats.num_renders += 1;
     odeRender(ode_ui_main, rect(0, 0, screen_size.width, screen_size.height));
 
-    Bool got_dirty_cells = force;
+    Bool got_dirty_cells = resized;
     if (!got_dirty_cells)
         for (UInt x = 0; x < screen_size.width; x += 1)
             for (UInt y = 0; y < screen_size.height; y += 1) {
