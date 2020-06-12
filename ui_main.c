@@ -30,16 +30,32 @@ static Bool onInputMain(OdeUiCtl* ctl_panel_main, Str const bytes) {
                 ode.ui.sidebar_right->base.visible = !ode.ui.sidebar_right->base.visible;
                 dirty = true;
             } break;
-            case 0x05: {
-                if (ode.ui.sidebar_left->ctl_idx != 0) {
-                    ode.ui.sidebar_left->ctl_idx = 0;
-                    odeUiCtlSetDirty(&ode.ui.sidebar_left->base, true, true);
-                }
-            } break;
-            case 0x13: {
-                if (ode.ui.sidebar_left->ctl_idx != 1) {
-                    ode.ui.sidebar_left->ctl_idx = 1;
-                    odeUiCtlSetDirty(&ode.ui.sidebar_left->base, true, true);
+            default: {
+                static UInt idxs[8] = {
+                    [0] = 0x05, // ctrl+e
+                    [1] = 0x06, // ctrl+f
+                    [2] = 0x18, // ctrl+x
+
+                    [3] = 0x0f, // ctrl+o
+                    [4] = 0x0c, // ctrl+l
+
+                    [6] = 0x04, // ctrl+d
+                    [7] = 0x14, // ctrl+t
+                };
+                OdeUiCtlPanel* sidebar = ode.ui.sidebar_left;
+                for (UInt i = 0; i < 8; i += 1) {
+                    if (i == 3)
+                        sidebar = ode.ui.sidebar_right;
+                    if (i == 6)
+                        sidebar = ode.ui.sidebar_bottom;
+                    if (idxs[i] != 0 && idxs[i] == bytes.at[0]) {
+                        UInt idx = i % 3;
+                        if (sidebar->ctl_idx != idx) {
+                            sidebar->ctl_idx = idx;
+                            odeUiCtlSetDirty(&sidebar->base, true, true);
+                        }
+                        break;
+                    }
                 }
             } break;
         }
@@ -51,19 +67,7 @@ static Bool onInputMain(OdeUiCtl* ctl_panel_main, Str const bytes) {
 }
 
 void odeUiMainOnResized(OdeSize const* const old, OdeSize const* const new) {
-#define default_fallback 4
-    UInt const frac_sidebar_left = (old->width > ode.ui.sidebar_left->base.rect.size.width)
-                                       ? (old->width / ode.ui.sidebar_left->base.rect.size.width)
-                                       : default_fallback;
-    UInt const frac_sidebar_right = (old->width > ode.ui.sidebar_right->base.rect.size.width)
-                                        ? (old->width / ode.ui.sidebar_right->base.rect.size.width)
-                                        : default_fallback;
-    UInt const frac_sidebar_bottom = (old->height > ode.ui.sidebar_bottom->base.rect.size.height)
-                                         ? (old->height / ode.ui.sidebar_bottom->base.rect.size.height)
-                                         : default_fallback;
-    ode.ui.sidebar_left->base.rect.size.width = new->width / frac_sidebar_left;
-    ode.ui.sidebar_right->base.rect.size.width = new->width / frac_sidebar_right;
-    ode.ui.sidebar_bottom->base.rect.size.height = new->height / frac_sidebar_bottom;
+    odeUiCtlSetDirty(&ode.ui.main->base, true, true);
 }
 
 void odeUiInitEditArea() {

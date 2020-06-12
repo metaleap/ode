@@ -79,6 +79,7 @@ struct Ode {
         struct Term {
             Termios orig_attrs;
             Bool did_tcsetattr;
+            int tty_fileno;
         } term;
     } init;
     struct Stats {

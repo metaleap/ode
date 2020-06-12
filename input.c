@@ -4,7 +4,7 @@
 
 Bool odeProcessInput() {
     static U8 input_buf[ode_input_buf_size];
-    Int n_bytes_read = read(STDIN_FILENO, input_buf, ode_input_buf_size);
+    Int n_bytes_read = read(ode.init.term.tty_fileno, input_buf, ode_input_buf_size);
     if (n_bytes_read < 0) {
         if (errno == EAGAIN)
             return false;

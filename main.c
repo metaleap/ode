@@ -17,6 +17,6 @@ int main() {
         redraw = ode.input.screen_resized || odeProcessInput() || ode.input.screen_resized;
         ode.input.screen_resized = false;
     }
-
+    // about final on-exit cleanups? the above `odeInit` call hooked core.c's `odeOnExit` into libc's `atexit`
     return 0;
 }

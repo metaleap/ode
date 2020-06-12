@@ -18,7 +18,8 @@ void odeRenderText(Str const text, OdeRect const* const screen_rect, Bool const 
         for (UInt x = screen_rect->pos.x + text.len; x < (screen_rect->pos.x + screen_rect->size.width); x += 1)
             ode.output.screen.prep[x][pos.y].rune.u32 = 0;
     for (UInt i = 0; i < text.len; i += 1)
-        if (((pos.x + 1) == (screen_rect->pos.x + screen_rect->size.width)) || text.at[i] == '\n') {
+        if (((pos.x + 2) >= (screen_rect->pos.x + screen_rect->size.width)) || text.at[i] == '\n'
+            || (i < (text.len - 1) && text.at[1 + i] == '\n')) {
             Str const ellipsis = str("…");
             ode.output.screen.prep[pos.x][pos.y]
                 .rune.bytes[strCopyTo((Str) {.at = ode.output.screen.prep[pos.x][pos.y].rune.bytes, .len = 0}, ellipsis).len] = 0;
@@ -31,53 +32,52 @@ void odeRenderText(Str const text, OdeRect const* const screen_rect, Bool const 
 
 OdeRect odeRender(OdeUiCtl* const ctl, OdeRect const screen_rect) {
     OdeRect ret_rect = screen_rect;
-    if (ctl->dirty) {
-        OdeRect dst_rect;
-        switch (ctl->dock) {
-            case ode_uictl_dock_none: {
-                dst_rect = rect(screen_rect.pos.x + ctl->rect.pos.x, screen_rect.pos.y + ctl->rect.pos.y, ctl->rect.size.width,
-                                ctl->rect.size.height);
-            } break;
-            case ode_uictl_dock_fill: {
-                dst_rect = screen_rect;
-            } break;
-            case ode_uictl_dock_left: {
-                UInt const width = uIntMin(ctl->rect.size.width, screen_rect.size.width);
-                dst_rect = rect(screen_rect.pos.x, screen_rect.pos.y, width, screen_rect.size.height);
-                ret_rect = rect(screen_rect.pos.x + width, screen_rect.pos.y, screen_rect.size.width - width, screen_rect.size.height);
-            } break;
-            case ode_uictl_dock_right: {
-                UInt const width = uIntMin(ctl->rect.size.width, screen_rect.size.width);
-                dst_rect = rect((screen_rect.pos.x + screen_rect.size.width) - width, screen_rect.pos.y, width, screen_rect.size.height);
-                ret_rect = rect(screen_rect.pos.x, screen_rect.pos.y, screen_rect.size.width - width, screen_rect.size.height);
-            } break;
-            case ode_uictl_dock_top: {
-                UInt const height = uIntMin(ctl->rect.size.height, screen_rect.size.height);
-                dst_rect = rect(screen_rect.pos.x, screen_rect.pos.y, screen_rect.size.width, height);
-                ret_rect = rect(screen_rect.pos.x, screen_rect.pos.y + height, screen_rect.size.width, screen_rect.size.height - height);
-            } break;
-            case ode_uictl_dock_bottom: {
-                UInt const height = uIntMin(ctl->rect.size.height, screen_rect.size.height);
-                dst_rect = rect(screen_rect.pos.x, (screen_rect.pos.y + screen_rect.size.height) - height, screen_rect.size.width, height);
-                ret_rect = rect(screen_rect.pos.x, screen_rect.pos.y, screen_rect.size.width, screen_rect.size.height - height);
-            } break;
-            default: odeDie(strZ(str2(str("BUG in render caller: invalid ctl->dock "), uIntToStr(ctl->dock, 1, 10))), false);
-        }
 
-        if ((dst_rect.pos.x < (screen_rect.pos.x + screen_rect.size.width))
-            && (dst_rect.pos.y < (screen_rect.pos.y + screen_rect.size.height))) {
-            OdePos dst_pos_max = pos(dst_rect.pos.x + dst_rect.size.width, dst_rect.pos.y + dst_rect.size.height);
-            if (ctl->ctls.len == 0)
-                for (UInt x = dst_rect.pos.x; x < dst_pos_max.x; x += 1)
-                    for (UInt y = dst_rect.pos.y; y < dst_pos_max.y; y += 1) {
-                        OdeScreenCell* cell = &ode.output.screen.prep[x][y];
-                        cell->color = odeUiCtlEffectiveColors(ctl);
-                        cell->style = ctl->style;
-                    }
-            ctl->on.render(ctl, &dst_rect);
-        }
+    OdeRect dst_rect; // if if not dirty, still need ret_rect
+    switch (ctl->dock) {
+        case ode_uictl_dock_none: {
+            dst_rect =
+                rect(screen_rect.pos.x + ctl->rect.pos.x, screen_rect.pos.y + ctl->rect.pos.y, ctl->rect.size.width, ctl->rect.size.height);
+        } break;
+        case ode_uictl_dock_fill: {
+            dst_rect = screen_rect;
+        } break;
+        case ode_uictl_dock_left: {
+            UInt const width = uIntMin(ctl->rect.size.width, screen_rect.size.width);
+            dst_rect = rect(screen_rect.pos.x, screen_rect.pos.y, width, screen_rect.size.height);
+            ret_rect = rect(screen_rect.pos.x + width, screen_rect.pos.y, screen_rect.size.width - width, screen_rect.size.height);
+        } break;
+        case ode_uictl_dock_right: {
+            UInt const width = uIntMin(ctl->rect.size.width, screen_rect.size.width);
+            dst_rect = rect((screen_rect.pos.x + screen_rect.size.width) - width, screen_rect.pos.y, width, screen_rect.size.height);
+            ret_rect = rect(screen_rect.pos.x, screen_rect.pos.y, screen_rect.size.width - width, screen_rect.size.height);
+        } break;
+        case ode_uictl_dock_top: {
+            UInt const height = uIntMin(ctl->rect.size.height, screen_rect.size.height);
+            dst_rect = rect(screen_rect.pos.x, screen_rect.pos.y, screen_rect.size.width, height);
+            ret_rect = rect(screen_rect.pos.x, screen_rect.pos.y + height, screen_rect.size.width, screen_rect.size.height - height);
+        } break;
+        case ode_uictl_dock_bottom: {
+            UInt const height = uIntMin(ctl->rect.size.height, screen_rect.size.height);
+            dst_rect = rect(screen_rect.pos.x, (screen_rect.pos.y + screen_rect.size.height) - height, screen_rect.size.width, height);
+            ret_rect = rect(screen_rect.pos.x, screen_rect.pos.y, screen_rect.size.width, screen_rect.size.height - height);
+        } break;
+        default: odeDie(strZ(str2(str("BUG in render caller: invalid ctl->dock "), uIntToStr(ctl->dock, 1, 10))), false);
     }
-    ctl->dirty = false;
+
+    if (ctl->dirty && (dst_rect.pos.x < (screen_rect.pos.x + screen_rect.size.width))
+        && (dst_rect.pos.y < (screen_rect.pos.y + screen_rect.size.height))) {
+        ctl->dirty = false;
+        OdePos dst_pos_max = pos(dst_rect.pos.x + dst_rect.size.width, dst_rect.pos.y + dst_rect.size.height);
+        if (ctl->ctls.len == 0)
+            for (UInt x = dst_rect.pos.x; x < dst_pos_max.x; x += 1)
+                for (UInt y = dst_rect.pos.y; y < dst_pos_max.y; y += 1) {
+                    OdeScreenCell* cell = &ode.output.screen.prep[x][y];
+                    cell->color = odeUiCtlEffectiveColors(ctl);
+                    cell->style = ctl->style;
+                }
+        ctl->on.render(ctl, &dst_rect);
+    }
     return ret_rect;
 }
 
@@ -145,18 +145,16 @@ void odeRenderOutput(OdeUiCtl* ode_ui_main, OdeSize const ode_output_screen_size
                         };
                         state.style = cell->style;
                         if (ansis[state.style] == NULL || ansis[state.style][0] == 0) {
-                            Str str = newStr(0, 24, true);
+                            Str ansi = newStr(0, 24, false);
                             for (OdeGlyphStyleFlags st = ode_glyphstyle_bold; st <= ode_glyphstyle_overline; st += st)
                                 if ((state.style & st) == st) {
-                                    for (UInt i = 0; true; i += 1)
-                                        if (ansis[st][i] == 'm')
-                                            break;
-                                        else
-                                            ·push(str, ansis[st][i]);
-                                    ·push(str, ';');
+                                    for (UInt i = ((ansi.len == 0) ? 0 : 2); ansis[st][i] != 'm'; i += 1)
+                                        ·push(ansi, ansis[st][i]);
+                                    ·push(ansi, ';');
                                 }
-                            str.at[str.len - 1] = 'm';
-                            ansis[state.style] = strZ(str);
+                            ansi.at[ansi.len - 1] = 'm';
+                            ansi.at[ansi.len] = 0;
+                            ansis[state.style] = strZ(ansi);
                         }
                         ·out(str(ansis[state.style]));
                         styles_reset = (state.style == 0);
@@ -190,7 +188,7 @@ void odeRenderOutput(OdeUiCtl* ode_ui_main, OdeSize const ode_output_screen_size
 
         if (buf.len > 0) {
             ode.stats.last_output_payload = buf.len;
-            if (write(STDOUT_FILENO, buf.at, buf.len) != (Int)buf.len)
+            if (write(ode.init.term.tty_fileno, buf.at, buf.len) != (Int)buf.len)
                 odeDie("odeRenderOutput: write", true);
         }
     }
