@@ -15,32 +15,26 @@
 #include "ui_statusbar.c"
 
 static Bool onInputMain(OdeUiCtl* ctl_panel_main, Str const bytes) {
-    Bool dirty = false;
+    Bool ret_dirty = false;
     if (bytes.len == 1)
         switch (bytes.at[0]) {
             case 'b': {
                 ode.ui.sidebar_bottom->base.visible = !ode.ui.sidebar_bottom->base.visible;
-                dirty = true;
+                ret_dirty = true;
             } break;
             case 'l': {
                 ode.ui.sidebar_left->base.visible = !ode.ui.sidebar_left->base.visible;
-                dirty = true;
+                ret_dirty = true;
             } break;
             case 'r': {
                 ode.ui.sidebar_right->base.visible = !ode.ui.sidebar_right->base.visible;
-                dirty = true;
+                ret_dirty = true;
             } break;
             default: {
                 static UInt idxs[8] = {
-                    [0] = 0x05, // ctrl+e
-                    [1] = 0x06, // ctrl+f
-                    [2] = 0x18, // ctrl+x
-
-                    [3] = 0x0f, // ctrl+o
-                    [4] = 0x0c, // ctrl+l
-
-                    [6] = 0x04, // ctrl+d
-                    [7] = 0x14, // ctrl+t
+                    [0] = 'e', [1] = 'f', [2] = 'x', // sidebar_left
+                    [3] = 'o', [4] = 'l',            // sidebar_right
+                    [6] = 'd', [7] = 't',            // sidebar_bottom
                 };
                 OdeUiCtlPanel* sidebar = ode.ui.sidebar_left;
                 for (UInt i = 0; i < 8; i += 1) {
@@ -48,10 +42,11 @@ static Bool onInputMain(OdeUiCtl* ctl_panel_main, Str const bytes) {
                         sidebar = ode.ui.sidebar_right;
                     if (i == 6)
                         sidebar = ode.ui.sidebar_bottom;
-                    if (idxs[i] != 0 && idxs[i] == bytes.at[0]) {
+                    if (idxs[i] != 0 && (idxs[i] & 0x1f) == bytes.at[0]) {
                         UInt idx = i % 3;
                         if (sidebar->ctl_idx != idx) {
                             sidebar->ctl_idx = idx;
+                            ret_dirty = true;
                             odeUiCtlSetDirty(&sidebar->base, true, true);
                         }
                         break;
@@ -59,11 +54,11 @@ static Bool onInputMain(OdeUiCtl* ctl_panel_main, Str const bytes) {
                 }
             } break;
         }
-    if (dirty)
+    if (ret_dirty)
         odeUiCtlSetDirty(ctl_panel_main, true, true);
-    dirty = odeUiCtlPanelOnInput(ctl_panel_main, bytes) // usually not needed, but this is the root panel
-            | dirty;
-    return dirty;
+    ret_dirty = odeUiCtlPanelOnInput(ctl_panel_main, bytes) // usually not needed, but this is the root panel
+                | ret_dirty;
+    return ret_dirty;
 }
 
 void odeUiMainOnResized(OdeSize const* const old, OdeSize const* const new) {

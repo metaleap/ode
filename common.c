@@ -8,6 +8,8 @@
 #define ode_output_screen_max_height 256
 #define ode_input_buf_size (1 * 1024 * 1024)
 
+typedef struct termios Termios;
+
 typedef enum OdeGlyphStyleFlags {
     ode_glyphstyle_none = 0,
     ode_glyphstyle_bold = 1,
@@ -24,6 +26,14 @@ typedef enum OdeOrientation {
     ode_orient_horiz,
     ode_orient_vert,
 } OdeOrientation;
+
+struct OdeCmd;
+typedef PtrAny (*OdeCmdHandler)(struct OdeCmd const* const, PtrAny const, UInt const);
+typedef struct OdeCmd {
+    Str id;
+    OdeCmdHandler handler;
+} OdeCmd;
+typedef ·ListOf(OdeCmd) OdeCmds;
 
 typedef struct OdeSize {
     U8 width;
@@ -72,7 +82,6 @@ typedef struct OdeScreenCell {
 struct OdeUiCtl;
 struct OdeUiCtlPanel;
 
-typedef struct termios Termios;
 struct Ode {
     struct Init {
         Strs argv_paths;
@@ -90,6 +99,7 @@ struct Ode {
     struct Input {
         Bool exit_requested;
         Bool screen_resized;
+        OdeCmds all_commands;
     } input;
     struct Output {
         struct Screen {

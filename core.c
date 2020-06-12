@@ -12,9 +12,6 @@
 #include "utils_std_mem.c"
 
 
-typedef struct termios Termios;
-
-
 #define term_esc "\x1b["
 
 
@@ -36,6 +33,7 @@ static void termRestore() {
     if (ode.init.term.did_tcsetattr) {
         tcsetattr(ode.init.term.tty_fileno, TCSAFLUSH, &ode.init.term.orig_attrs);
         write(ode.init.term.tty_fileno, term_esc "?1003l", 2 + 6); // request to no longer report mouse events
+        write(ode.init.term.tty_fileno, term_esc "?2004l", 2 + 6); // disable bracketed-paste mode
         write(ode.init.term.tty_fileno, term_esc "?47l", 2 + 4);   // leave alt screen (entered in termInit)
         write(ode.init.term.tty_fileno, term_esc "?25h", 2 + 4);   // show cursor (hidden in termInit)
         write(ode.init.term.tty_fileno, term_esc "u", 2 + 1);      // restore cursor pos (stored in termInit)
@@ -44,7 +42,7 @@ static void termRestore() {
 
 static void odeOnExit() {
     termRestore();
-    if (ode.init.term.tty_fileno >= 2)
+    if (ode.init.term.tty_fileno > 2)
         close(ode.init.term.tty_fileno);
 }
 
@@ -100,6 +98,7 @@ static void termInit() {
     write(ode.init.term.tty_fileno, term_esc "s", 2 + 1);      // store cursor pos (restored in termRestore)
     write(ode.init.term.tty_fileno, term_esc "?25l", 2 + 4);   // hide cursor (recovered in termRestore)
     write(ode.init.term.tty_fileno, term_esc "?47h", 2 + 4);   // enter alt screen (left in termRestore)
+    write(ode.init.term.tty_fileno, term_esc "?2004h", 2 + 6); // enable bracketed-paste mode
     write(ode.init.term.tty_fileno, term_esc "?1003h", 2 + 6); // request terminal to report mouse events
     termClearAndPosTopLeft();
 }
@@ -113,6 +112,7 @@ void odeInit() {
     ode.stats.num_outputs = 0;
     ode.input.exit_requested = false;
     ode.input.screen_resized = false;
+    ode.input.all_commands = ·listOf(OdeCmd, 0, 8);
     ode.output.colors = ·listOf(OdeRgbaColor, 0, 16);
 
     Str const esc = strL(term_esc, 2);

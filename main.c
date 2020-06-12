@@ -1,13 +1,20 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #define mem_bss_max (2 * 1024 * 1024)
 #include "utils_std_basics.c"
+#include "cmds.c"
 #include "core.c"
 #include "input.c"
 #include "output.c"
 #include "ui_main.c"
 
+PtrAny odeCmdQuit(struct OdeCmd const* const cmd, PtrAny const args, UInt const args_len) {
+    ode.input.exit_requested = true;
+    return NULL;
+}
+
 int main() {
     odeInit();
+    odeCmd(str("workbench.action.quit"), odeCmdQuit);
     odeUiInitMain();
 
     Bool redraw = true;
