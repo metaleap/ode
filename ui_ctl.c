@@ -9,7 +9,7 @@ typedef ·ListOfPtrs(OdeUiCtl) OdeUiCtls;
 
 typedef void (*OdeUiCtlRenderFunc)(OdeUiCtl*, OdeRect*);
 typedef void (*OdeUiCtlDisposeFunc)(OdeUiCtl*);
-typedef Bool (*OdeUiCtlInputFunc)(OdeUiCtl*, Str const bytes);
+typedef Bool (*OdeUiCtlInputFunc)(OdeUiCtl*, OdeInputs const inputs);
 
 typedef enum OdeUiCtlDocking {
     ode_uictl_dock_none = 0,

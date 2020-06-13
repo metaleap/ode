@@ -137,7 +137,11 @@ void odeInit() {
     ode.stats.num_outputs = 0;
     ode.input.exit_requested = false;
     ode.input.screen_resized = false;
-    ode.input.mouse_pos = pos(255, 255);
+    ode.input.mouse.pos = pos(255, 255);
+    ode.input.mouse.btn_l_down = false;
+    ode.input.mouse.btn_m_down = false;
+    ode.input.mouse.btn_r_down = false;
+    ode.input.mouse.dragging = false;
     ode.input.all_commands = ·listOf(OdeCmd, NULL, 0, 8);
     ode.output.colors = ·listOf(OdeRgbaColor, NULL, 0, 16);
 

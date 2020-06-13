@@ -12,26 +12,26 @@ typedef struct OdeUiMain {
     OdeUiCtlPanel ui_panel;
 } OdeUiMain;
 
-static Bool onInputMain(OdeUiCtl* ctl_panel_main, Str const bytes) {
+static Bool onInputMain(OdeUiCtl* ctl_panel_main, OdeInputs const inputs) {
     Bool ret_dirty = false;
-    if (bytes.len == 1)
-        switch (bytes.at[0]) {
-            case 'b' & 0x1f: {
-                ode.ui.sidebar_bottom->ui_panel.base.visible = !ode.ui.sidebar_bottom->ui_panel.base.visible;
-                ret_dirty = true;
-            } break;
-            case 'l' & 0x1f: {
-                ode.ui.sidebar_left->ui_panel.base.visible = !ode.ui.sidebar_left->ui_panel.base.visible;
-                ret_dirty = true;
-            } break;
-            case 'r' & 0x1f: {
-                ode.ui.sidebar_right->ui_panel.base.visible = !ode.ui.sidebar_right->ui_panel.base.visible;
-                ret_dirty = true;
-            } break;
-        }
+    // if (bytes.len == 1)
+    //     switch (bytes.at[0]) {
+    //         case 'b' & 0x1f: {
+    //             ode.ui.sidebar_bottom->ui_panel.base.visible = !ode.ui.sidebar_bottom->ui_panel.base.visible;
+    //             ret_dirty = true;
+    //         } break;
+    //         case 'l' & 0x1f: {
+    //             ode.ui.sidebar_left->ui_panel.base.visible = !ode.ui.sidebar_left->ui_panel.base.visible;
+    //             ret_dirty = true;
+    //         } break;
+    //         case 'r' & 0x1f: {
+    //             ode.ui.sidebar_right->ui_panel.base.visible = !ode.ui.sidebar_right->ui_panel.base.visible;
+    //             ret_dirty = true;
+    //         } break;
+    //     }
     if (ret_dirty)
         odeUiCtlSetDirty(ctl_panel_main, true, true);
-    ret_dirty = odeUiCtlPanelOnInput(ctl_panel_main, bytes) // usually not needed, but this is the root panel
+    ret_dirty = odeUiCtlPanelOnInput(ctl_panel_main, inputs) // usually not needed, but this is the root panel
                 | ret_dirty;
     return ret_dirty;
 }

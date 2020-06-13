@@ -6,7 +6,6 @@
 
 #define ode_output_screen_max_width 256
 #define ode_output_screen_max_height 256
-#define ode_input_buf_size (1 * 1024 * 1024)
 
 
 typedef enum OdeInputKind {
@@ -124,7 +123,15 @@ struct Ode {
         UInt last_output_payload;
     } stats;
     struct Input {
-        OdePos mouse_pos;
+        struct Mouse {
+            OdePos pos;
+            struct {
+                Bool btn_l_down : 1;
+                Bool btn_r_down : 1;
+                Bool btn_m_down : 1;
+                Bool dragging : 1;
+            };
+        } mouse;
         OdeCmds all_commands;
         Bool exit_requested;
         Bool screen_resized;
@@ -150,16 +157,16 @@ struct Ode {
 
 typedef struct OdeInput {
     union OdeInputOf {
-        Str bytes;
-        UInt key;
+        Str key_str;
         struct OdeInputMouse {
-            Bool down : 1;
-            Bool up : 1;
-            Bool btn_left : 1;
-            Bool btn_right : 1;
-            Bool btn_mid : 1;
-            Bool scroll : 1;
-            Bool drag : 1;
+            Bool scroll_up : 1;
+            Bool scroll_down : 1;
+            Bool click : 1;
+            Bool mouse_down : 1;
+            Bool mouse_up : 1;
+            Bool btn_l : 1;
+            Bool btn_m : 1;
+            Bool btn_r : 1;
         } mouse;
     } of;
     OdeInputKind kind;
@@ -167,8 +174,9 @@ typedef struct OdeInput {
         Bool ctrl : 1;
         Bool alt : 1;
         Bool shift : 1;
-    } mod;
+    } mod_key;
 } OdeInput;
+typedef ·SliceOf(OdeInput) OdeInputs;
 
 
 

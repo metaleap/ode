@@ -48,13 +48,13 @@ void odeUiCtlPanelOnRender(OdeUiCtl* ctl_panel, OdeRect* screen_rect) {
     }
 }
 
-Bool odeUiCtlPanelOnInput(OdeUiCtl* ctl_panel, Str const bytes) {
+Bool odeUiCtlPanelOnInput(OdeUiCtl* ctl_panel, OdeInputs const inputs) {
     Bool dirty = false;
     for (UInt i = 0; i < ctl_panel->ctls.len; i += 1) {
         if (ctl_panel->ctls.at[i]->on.input != NULL)
-            dirty |= ctl_panel->ctls.at[i]->on.input(ctl_panel->ctls.at[i], bytes);
+            dirty |= ctl_panel->ctls.at[i]->on.input(ctl_panel->ctls.at[i], inputs);
         if (ctl_panel->ctls.at[i]->on.input != odeUiCtlPanelOnInput)
-            dirty |= odeUiCtlPanelOnInput(ctl_panel->ctls.at[i], bytes);
+            dirty |= odeUiCtlPanelOnInput(ctl_panel->ctls.at[i], inputs);
     }
     return dirty;
 }
