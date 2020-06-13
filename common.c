@@ -154,6 +154,15 @@ OdeRect rect(UInt x, UInt y, UInt width, UInt height) {
     return (OdeRect) {.pos = pos(x, y), .size = size(width, height)};
 }
 
+OdeCmd* odeCmd(Str const cmd_id, OdeCmdHandler const cmd_handler) {
+    for (UInt i = 0; i < ode.input.all_commands.len; i += 1)
+        if (strEql(cmd_id, ode.input.all_commands.at[i].id))
+            return &ode.input.all_commands.at[i];
+    ·assert(cmd_handler != NULL);
+    ·append(ode.input.all_commands, ((OdeCmd) {.id = cmd_id, .handler = cmd_handler}));
+    return ·last(ode.input.all_commands);
+}
+
 void odeScreenClearRectText(OdeRect const* const rect);
 void odeRenderText(Str const text, OdeRect const* const screen_rect, Bool const clear_full_line);
 OdeRect odeRender(struct OdeUiCtl* const ctl, OdeRect const screen_rect);
