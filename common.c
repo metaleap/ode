@@ -136,8 +136,8 @@ OdeRgbaColor* rgba(U8 const r, U8 const g, U8 const b, U8 const a) {
         if (color->rgba == spec.rgba)
             return &ode.output.colors.at[i];
     }
-    spec.ansi_esc =
-        str7(strL(";2;", 3), uIntToStr(r, 1, 10), strL(";", 1), uIntToStr(g, 1, 10), strL(";", 1), uIntToStr(b, 1, 10), strL("m", 1));
+    spec.ansi_esc = str7(NULL, strL(";2;", 3), uIntToStr(NULL, r, 1, 10), strL(";", 1), uIntToStr(NULL, g, 1, 10), strL(";", 1),
+                         uIntToStr(NULL, b, 1, 10), strL("m", 1));
     ·append(ode.output.colors, spec);
     return ·last(ode.output.colors);
 }

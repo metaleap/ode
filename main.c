@@ -1,7 +1,6 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #define mem_bss_max (2 * 1024 * 1024)
 #include "utils_std_basics.c"
-#include "cmds.c"
 #include "core.c"
 #include "input.c"
 #include "output.c"

@@ -38,7 +38,7 @@ void odeUiCtlPanelOnRender(OdeUiCtl* ctl_panel, OdeRect* screen_rect) {
             dst_rect = odeUiCtlPanelRenderChild(ctl_panel, panel->tab_bar, dst_rect);
         dst_rect = odeUiCtlPanelRenderChild(ctl_panel, ctl_panel->ctls.at[panel->ctl_idx], dst_rect);
     } else if (ctl_panel->ctls.len > 0)
-        odeDie(strZ(str4(str("TODO: "), uIntToStr(panel->mode, 1, 10), str(" "), panel->base.text)), false);
+        odeDie(strZ(str4(NULL, str("TODO: "), uIntToStr(NULL, panel->mode, 1, 10), str(" "), panel->base.text)), false);
 
     // temp render logic: ctl.text if no other content
     if (ctl_panel->ctls.len == 0) {

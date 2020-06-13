@@ -62,7 +62,7 @@ OdeRect odeRender(OdeUiCtl* const ctl, OdeRect const screen_rect) {
             dst_rect = rect(screen_rect.pos.x, (screen_rect.pos.y + screen_rect.size.height) - height, screen_rect.size.width, height);
             ret_rect = rect(screen_rect.pos.x, screen_rect.pos.y, screen_rect.size.width, screen_rect.size.height - height);
         } break;
-        default: odeDie(strZ(str2(str("BUG in render caller: invalid ctl->dock "), uIntToStr(ctl->dock, 1, 10))), false);
+        default: odeDie(strZ(str2(NULL, str("BUG in render caller: invalid ctl->dock "), uIntToStr(NULL, ctl->dock, 1, 10))), false);
     }
 
     if (ctl->dirty && (dst_rect.pos.x < (screen_rect.pos.x + screen_rect.size.width))
@@ -145,7 +145,7 @@ void odeRenderOutput(OdeUiCtl* ode_ui_main, OdeSize const ode_output_screen_size
                         };
                         state.style = cell->style;
                         if (ansis[state.style] == NULL || ansis[state.style][0] == 0) {
-                            Str ansi = newStr(0, 24);
+                            Str ansi = newStr(NULL, 0, 24);
                             for (OdeGlyphStyleFlags st = ode_glyphstyle_bold; st <= ode_glyphstyle_overline; st += st)
                                 if ((state.style & st) == st) {
                                     for (UInt i = ((ansi.len == 0) ? 0 : 2); ansis[st][i] != 'm'; i += 1)

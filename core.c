@@ -121,7 +121,7 @@ void odeInit() {
             ode.output.screen.real[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
             ode.output.screen.prep[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
             ode.output.screen.term_esc_cursor_pos[x][y] =
-                str5(esc, uIntToStr(1 + y, 1, 10), strL(";", 1), uIntToStr(1 + x, 1, 10), strL("H", 1));
+                str5(NULL, esc, uIntToStr(NULL, 1 + y, 1, 10), strL(";", 1), uIntToStr(NULL, 1 + x, 1, 10), strL("H", 1));
         }
     updateScreenSize();
     if (signal(SIGWINCH, termOnResized) == SIG_ERR)
