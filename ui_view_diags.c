@@ -5,7 +5,7 @@
 #include "ui_ctl_panel.c"
 
 typedef struct OdeUiViewDiagnostics {
-    OdeUiCtlPanel base;
+    OdeUiCtlPanel ui_panel;
 } OdeUiViewDiagnostics;
 
 // void odeUiInitViewDiags() {

@@ -8,7 +8,12 @@
 #define ode_output_screen_max_height 256
 #define ode_input_buf_size (1 * 1024 * 1024)
 
-typedef struct termios Termios;
+
+typedef enum OdeInputKind {
+    ode_input_bytes,
+    ode_input_mouse,
+    ode_input_key,
+} OdeInputKind;
 
 typedef enum OdeGlyphStyleFlags {
     ode_glyphstyle_none = 0,
@@ -94,6 +99,7 @@ struct OdeUiViewDiags;
 struct OdeUiViewLogOutput;
 struct OdeUiViewTerminal;
 
+typedef struct termios Termios;
 struct Ode {
     struct Init {
         struct Env {
@@ -118,9 +124,10 @@ struct Ode {
         UInt last_output_payload;
     } stats;
     struct Input {
+        OdePos mouse_pos;
+        OdeCmds all_commands;
         Bool exit_requested;
         Bool screen_resized;
-        OdeCmds all_commands;
     } input;
     struct Output {
         struct Screen {
@@ -140,6 +147,30 @@ struct Ode {
         struct OdeUiEditors* editors;
     } ui;
 } ode;
+
+typedef struct OdeInput {
+    union OdeInputOf {
+        Str bytes;
+        UInt key;
+        struct OdeInputMouse {
+            Bool down : 1;
+            Bool up : 1;
+            Bool btn_left : 1;
+            Bool btn_right : 1;
+            Bool btn_mid : 1;
+            Bool scroll : 1;
+            Bool drag : 1;
+        } mouse;
+    } of;
+    OdeInputKind kind;
+    struct {
+        Bool ctrl : 1;
+        Bool alt : 1;
+        Bool shift : 1;
+    } mod;
+} OdeInput;
+
+
 
 void odeDie(CStr const hint, Bool const got_errno);
 

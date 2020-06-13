@@ -5,7 +5,7 @@
 #include "ui_ctl_panel.c"
 
 typedef struct OdeUiViewOutline {
-    OdeUiCtlPanel base;
+    OdeUiCtlPanel ui_panel;
 } OdeUiViewOutline;
 
 // void odeUiInitViewOutline() {

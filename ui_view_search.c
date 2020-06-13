@@ -5,7 +5,7 @@
 #include "ui_ctl_panel.c"
 
 typedef struct OdeUiViewSearch {
-    OdeUiCtlPanel base;
+    OdeUiCtlPanel ui_panel;
 } OdeUiViewSearch;
 
 // void odeUiInitViewSearch() {

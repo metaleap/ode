@@ -5,5 +5,5 @@
 #include "ui_ctl_panel.c"
 
 typedef struct OdeUiPalette {
-    OdeUiCtlPanel base;
+    OdeUiCtlPanel ui_panel;
 } OdeUiPalette;

@@ -131,11 +131,13 @@ void odeInit() {
     ode.init.term.tty_fileno = open("/dev/tty", O_RDWR | O_NOCTTY);
     if (ode.init.term.tty_fileno == -1)
         odeDie("odeInit: open(/dev/tty)", true);
+
     ode.stats.last_output_payload = 0;
     ode.stats.num_renders = 0;
     ode.stats.num_outputs = 0;
     ode.input.exit_requested = false;
     ode.input.screen_resized = false;
+    ode.input.mouse_pos = pos(255, 255);
     ode.input.all_commands = ·listOf(OdeCmd, NULL, 0, 8);
     ode.output.colors = ·listOf(OdeRgbaColor, NULL, 0, 16);
 

@@ -1,10 +1,10 @@
 #pragma once
+#include "utils_std_basics.c"
+#include "utils_std_mem.c"
 #include "common.c"
 #include "core.c"
 #include "ui_ctl.c"
 #include "ui_main.c"
-#include "utils_std_basics.c"
-#include "utils_std_mem.c"
 
 void odeScreenClearRectText(OdeRect const* const rect) {
     for (UInt x = rect->pos.x, x_end = (rect->pos.x + rect->size.width); x < x_end; x += 1)

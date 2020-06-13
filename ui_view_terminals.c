@@ -5,7 +5,7 @@
 #include "ui_ctl_panel.c"
 
 typedef struct OdeUiViewTerminal {
-    OdeUiCtlPanel base;
+    OdeUiCtlPanel ui_panel;
 } OdeUiViewTerminal;
 
 // void odeUiInitViewTerminals() {

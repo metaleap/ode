@@ -5,7 +5,7 @@
 #include "ui_ctl_panel.c"
 
 typedef struct OdeUiViewExplorer {
-    OdeUiCtlPanel base;
+    OdeUiCtlPanel ui_panel;
 } OdeUiViewExplorer;
 
 PtrAny odeUiViewExplorerFocus(struct OdeCmd const* const cmd, PtrAny const args, UInt const args_len) {

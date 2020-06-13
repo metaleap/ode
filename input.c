@@ -19,5 +19,5 @@ Bool odeProcessInput() {
             ode.input.exit_requested = true;
 
     return (!ode.input.exit_requested) && (n_bytes_read > 0)
-           && ode.ui.main->base.base.on.input(&ode.ui.main->base.base, (Str) {.at = input_buf, .len = (UInt)n_bytes_read});
+           && ode.ui.main->ui_panel.base.on.input(&ode.ui.main->ui_panel.base, (Str) {.at = input_buf, .len = (UInt)n_bytes_read});
 }

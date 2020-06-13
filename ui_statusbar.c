@@ -6,7 +6,7 @@
 #include "ui_ctl_panel.c"
 
 typedef struct OdeUiStatusbar {
-    OdeUiCtlPanel base;
+    OdeUiCtlPanel ui_panel;
 } OdeUiStatusbar;
 
 static Bool onInputStatusbar(OdeUiCtl* ctl_panel_statusbar, Str const bytes) {
@@ -22,10 +22,10 @@ static Bool onInputStatusbar(OdeUiCtl* ctl_panel_statusbar, Str const bytes) {
 
 void odeUiInitStatusbar() {
     OdeUiStatusbar statusbar =
-        (OdeUiStatusbar) {.base = odeUiCtlPanel(odeUiCtl(NULL, str("Statusbar"), ode_uictl_dock_bottom, rect(0, 0, 0, 1)), ode_orient_horiz,
-                                                ode_uictl_panel_orient, 32)};
-    statusbar.base.base.color.bg = rgba(0, 0, 0, 0);
-    statusbar.base.base.color.fg = rgba(0, 0, 0, 0);
-    statusbar.base.base.on.input = onInputStatusbar;
+        (OdeUiStatusbar) {.ui_panel = odeUiCtlPanel(odeUiCtl(NULL, str("Statusbar"), ode_uictl_dock_bottom, rect(0, 0, 0, 1)),
+                                                    ode_orient_horiz, ode_uictl_panel_orient, 32)};
+    statusbar.ui_panel.base.color.bg = rgba(0, 0, 0, 0);
+    statusbar.ui_panel.base.color.fg = rgba(0, 0, 0, 0);
+    statusbar.ui_panel.base.on.input = onInputStatusbar;
     ode.ui.statusbar = ·keep(OdeUiStatusbar, NULL, &statusbar);
 }
