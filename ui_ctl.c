@@ -7,8 +7,9 @@ struct OdeUiCtl;
 typedef struct OdeUiCtl OdeUiCtl;
 typedef ·ListOfPtrs(OdeUiCtl) OdeUiCtls;
 
-typedef void (*OdeUiCtlRenderFunc)(struct OdeUiCtl*, OdeRect*);
-typedef Bool (*OdeUiCtlInputFunc)(struct OdeUiCtl*, Str const bytes);
+typedef void (*OdeUiCtlRenderFunc)(OdeUiCtl*, OdeRect*);
+typedef void (*OdeUiCtlDisposeFunc)(OdeUiCtl*);
+typedef Bool (*OdeUiCtlInputFunc)(OdeUiCtl*, Str const bytes);
 
 typedef enum OdeUiCtlDocking {
     ode_uictl_dock_none = 0,
@@ -20,13 +21,14 @@ typedef enum OdeUiCtlDocking {
 } OdeUiCtlDocking;
 
 struct OdeUiCtl {
+    MemHeap* mem;
     OdeUiCtls ctls;
-    struct OdeUiCtl* parent;
+    OdeUiCtl* parent;
     Str text;
     OdeColored color;
+    OdeRect rect;
     OdeGlyphStyleFlags style;
     OdeUiCtlDocking dock;
-    OdeRect rect;
     struct {
         Bool dirty : 1;
         Bool disabled : 1;
@@ -36,14 +38,24 @@ struct OdeUiCtl {
     struct {
         OdeUiCtlRenderFunc render;
         OdeUiCtlInputFunc input;
+        OdeUiCtlDisposeFunc dispose;
     } on;
 };
 
 
-OdeUiCtl odeUiCtl(Str const text, OdeUiCtlDocking const dock, OdeRect rect) {
+OdeUiCtl odeUiCtl(MemHeap* mem_heap, Str const text, OdeUiCtlDocking const dock, OdeRect rect) {
     OdeUiCtl ret_ctl = (OdeUiCtl) {
-        .dirty = true, .ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, NULL, 0, 0), .visible = true, .text = text, .dock = dock, .rect = rect};
+        .dirty = true, .ctls = (OdeUiCtls) {.at = NULL}, .visible = true, .text = text, .dock = dock, .rect = rect, .mem = mem_heap};
     return ret_ctl;
+}
+
+void odeUiCtlDispose(OdeUiCtl* ctl) {
+    for (UInt i = 0; i < ctl->ctls.len; i += 1)
+        odeUiCtlDispose(ctl->ctls.at[i]);
+    if (ctl->on.dispose != NULL)
+        ctl->on.dispose(ctl);
+    if (ctl->mem != NULL && (ctl->parent == NULL || ctl->mem != ctl->parent->mem))
+        memHeapFree(ctl->mem);
 }
 
 void odeUiCtlSetDirty(OdeUiCtl* ctl, Bool const dirty, Bool const propagate) {

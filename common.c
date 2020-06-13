@@ -79,12 +79,28 @@ typedef struct OdeScreenCell {
     } rune;
 } OdeScreenCell;
 
-struct OdeUiCtl;
-struct OdeUiCtlPanel;
+struct OdeUiSidebar;
+struct OdeUiMain;
+struct OdeUiStatusbar;
+struct OdeUiSidebar;
+struct OdeUiSidebar;
+struct OdeUiSidebar;
+struct OdeUiEditors;
+struct OdeUiViewExplorer;
+struct OdeUiViewExtensions;
+struct OdeUiViewSearch;
+struct OdeUiViewOutline;
+struct OdeUiViewDiags;
+struct OdeUiViewLogOutput;
+struct OdeUiViewTerminal;
 
 struct Ode {
     struct Init {
-        Strs argv_paths;
+        struct Fs {
+            Str cur_dir_path;
+            Strs argv_dir_paths;
+            Strs argv_file_paths;
+        } fs;
         struct Term {
             Termios orig_attrs;
             Bool did_tcsetattr;
@@ -111,19 +127,12 @@ struct Ode {
         OdeRgbaColors colors;
     } output;
     struct Ui {
-        struct OdeUiCtlPanel* main;
-        struct OdeUiCtlPanel* statusbar;
-        struct OdeUiCtlPanel* sidebar_left;
-        struct OdeUiCtlPanel* sidebar_right;
-        struct OdeUiCtlPanel* sidebar_bottom;
-        struct OdeUiCtlPanel* editors;
-        struct OdeUiCtlPanel* view_explorer;
-        struct OdeUiCtlPanel* view_extensions;
-        struct OdeUiCtlPanel* view_search;
-        struct OdeUiCtlPanel* view_outline;
-        struct OdeUiCtlPanel* view_diags;
-        struct OdeUiCtlPanel* view_logs;
-        struct OdeUiCtlPanel* view_terminals;
+        struct OdeUiMain* main;
+        struct OdeUiStatusbar* statusbar;
+        struct OdeUiSidebar* sidebar_left;
+        struct OdeUiSidebar* sidebar_right;
+        struct OdeUiSidebar* sidebar_bottom;
+        struct OdeUiEditors* editors;
     } ui;
 } ode;
 
@@ -165,4 +174,5 @@ OdeCmd* odeCmd(Str const cmd_id, OdeCmdHandler const cmd_handler) {
 
 void odeScreenClearRectText(OdeRect const* const rect);
 void odeRenderText(Str const text, OdeRect const* const screen_rect, Bool const clear_full_line);
+struct OdeUiCtl;
 OdeRect odeRender(struct OdeUiCtl* const ctl, OdeRect const screen_rect);

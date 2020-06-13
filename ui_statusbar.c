@@ -5,6 +5,10 @@
 #include "ui_ctl.c"
 #include "ui_ctl_panel.c"
 
+typedef struct OdeUiStatusbar {
+    OdeUiCtlPanel base;
+} OdeUiStatusbar;
+
 static Bool onInputStatusbar(OdeUiCtl* ctl_panel_statusbar, Str const bytes) {
     Strs hexes = ·sliceOf(Str, NULL, bytes.len, bytes.len);
     for (UInt i = 0; i < bytes.len; i += 1)
@@ -17,9 +21,11 @@ static Bool onInputStatusbar(OdeUiCtl* ctl_panel_statusbar, Str const bytes) {
 }
 
 void odeUiInitStatusbar() {
-    ode.ui.statusbar =
-        odeUiCtlPanel(odeUiCtl(str("Statusbar"), ode_uictl_dock_bottom, rect(0, 0, 0, 1)), ode_orient_horiz, ode_uictl_panel_orient, 32);
-    ode.ui.statusbar->base.color.bg = rgba(0, 0, 0, 0);
-    ode.ui.statusbar->base.color.fg = rgba(0, 0, 0, 0);
-    ode.ui.statusbar->base.on.input = onInputStatusbar;
+    OdeUiStatusbar statusbar =
+        (OdeUiStatusbar) {.base = odeUiCtlPanel(odeUiCtl(NULL, str("Statusbar"), ode_uictl_dock_bottom, rect(0, 0, 0, 1)), ode_orient_horiz,
+                                                ode_uictl_panel_orient, 32)};
+    statusbar.base.base.color.bg = rgba(0, 0, 0, 0);
+    statusbar.base.base.color.fg = rgba(0, 0, 0, 0);
+    statusbar.base.base.on.input = onInputStatusbar;
+    ode.ui.statusbar = ·keep(OdeUiStatusbar, NULL, &statusbar);
 }

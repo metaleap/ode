@@ -4,8 +4,12 @@
 #include "ui_ctl.c"
 #include "ui_ctl_panel.c"
 
-void odeUiInitViewDiags() {
-    ode.ui.view_diags =
-        odeUiCtlPanel(odeUiCtl(str("Diags"), ode_uictl_dock_fill, rect(0, 0, 0, 0)), ode_orient_none, ode_uictl_panel_none, 0);
-    ode.ui.view_diags->base.color.bg = rgba(55, 99, 77, 255);
-}
+typedef struct OdeUiViewDiagnostics {
+    OdeUiCtlPanel base;
+} OdeUiViewDiagnostics;
+
+// void odeUiInitViewDiags() {
+//     ode.ui.view_diags =
+//         odeUiCtlPanel(odeUiCtl(NULL, str("Diags"), ode_uictl_dock_fill, rect(0, 0, 0, 0)), ode_orient_none, ode_uictl_panel_none, 0);
+//     ode.ui.view_diags->base.color.bg = rgba(55, 99, 77, 255);
+// }

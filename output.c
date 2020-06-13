@@ -76,6 +76,7 @@ OdeRect odeRender(OdeUiCtl* const ctl, OdeRect const screen_rect) {
                     cell->color = odeUiCtlEffectiveColors(ctl);
                     cell->style = ctl->style;
                 }
+        ·assert(ctl->on.render != NULL);
         ctl->on.render(ctl, &dst_rect);
     }
     return ret_rect;

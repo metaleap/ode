@@ -4,7 +4,7 @@
 
 typedef struct OdeUiCtlBtn {
     OdeUiCtl base;
-    Str command;
+    Str command_id;
     Bool toggle;
 } OdeUiCtlBtn;
 typedef ·ListOf(OdeUiCtlBtn) OdeUiCtlBtns;

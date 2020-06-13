@@ -36,7 +36,8 @@ void odeUiCtlPanelOnRender(OdeUiCtl* ctl_panel, OdeRect* screen_rect) {
     else if (panel->mode == ode_uictl_panel_tabs) {
         if (panel->tab_bar != NULL)
             dst_rect = odeUiCtlPanelRenderChild(ctl_panel, panel->tab_bar, dst_rect);
-        dst_rect = odeUiCtlPanelRenderChild(ctl_panel, ctl_panel->ctls.at[panel->ctl_idx], dst_rect);
+        if (ctl_panel->ctls.len > 0)
+            dst_rect = odeUiCtlPanelRenderChild(ctl_panel, ctl_panel->ctls.at[panel->ctl_idx], dst_rect);
     } else if (ctl_panel->ctls.len > 0)
         odeDie(strZ(str4(NULL, str("TODO: "), uIntToStr(NULL, panel->mode, 1, 10), str(" "), panel->base.text)), false);
 
@@ -58,11 +59,9 @@ Bool odeUiCtlPanelOnInput(OdeUiCtl* ctl_panel, Str const bytes) {
     return dirty;
 }
 
-OdeUiCtlPanel* odeUiCtlPanel(OdeUiCtl base, OdeOrientation orientation, OdeUiCtlPanelMode mode, UInt const ctls_capacity) {
-    OdeUiCtlPanel* ret_panel = ·new(OdeUiCtlPanel, NULL);
+OdeUiCtlPanel odeUiCtlPanel(OdeUiCtl base, OdeOrientation orientation, OdeUiCtlPanelMode mode, UInt const ctls_capacity) {
     base.on.render = odeUiCtlPanelOnRender;
     base.on.input = odeUiCtlPanelOnInput;
-    base.ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, NULL, 0, ctls_capacity);
-    *ret_panel = (OdeUiCtlPanel) {.base = base, .tab_bar = NULL, .ctl_idx = 0, .orient = orientation, .mode = mode};
-    return ret_panel;
+    base.ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, base.mem, 0, ctls_capacity);
+    return (OdeUiCtlPanel) {.base = base, .tab_bar = NULL, .ctl_idx = 0, .orient = orientation, .mode = mode};
 }

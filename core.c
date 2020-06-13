@@ -104,6 +104,11 @@ static void termInit() {
 }
 
 void odeInit() {
+    ode.init.fs.cur_dir_path = str(getcwd((PtrAny)&mem_bss.buf, mem_bss_max));
+    if (ode.init.fs.cur_dir_path.at == NULL)
+        odeDie("odeInit: getcwd", true);
+    mem_bss.pos = ode.init.fs.cur_dir_path.len;
+
     ode.init.term.tty_fileno = open("/dev/tty", O_RDWR | O_NOCTTY);
     if (ode.init.term.tty_fileno == -1)
         odeDie("odeInit: open(/dev/tty)", true);
