@@ -62,7 +62,7 @@ OdeUiCtlPanel* odeUiCtlPanel(OdeUiCtl base, OdeOrientation orientation, OdeUiCtl
     OdeUiCtlPanel* ret_panel = ·new(OdeUiCtlPanel, NULL);
     base.on.render = odeUiCtlPanelOnRender;
     base.on.input = odeUiCtlPanelOnInput;
-    base.ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, 0, ctls_capacity);
+    base.ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, NULL, 0, ctls_capacity);
     *ret_panel = (OdeUiCtlPanel) {.base = base, .tab_bar = NULL, .ctl_idx = 0, .orient = orientation, .mode = mode};
     return ret_panel;
 }

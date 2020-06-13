@@ -112,8 +112,8 @@ void odeInit() {
     ode.stats.num_outputs = 0;
     ode.input.exit_requested = false;
     ode.input.screen_resized = false;
-    ode.input.all_commands = ·listOf(OdeCmd, 0, 8);
-    ode.output.colors = ·listOf(OdeRgbaColor, 0, 16);
+    ode.input.all_commands = ·listOf(OdeCmd, NULL, 0, 8);
+    ode.output.colors = ·listOf(OdeRgbaColor, NULL, 0, 16);
 
     Str const esc = strL(term_esc, 2);
     for (UInt x = 0; x < ode_output_screen_max_width; x += 1)

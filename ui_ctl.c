@@ -41,8 +41,8 @@ struct OdeUiCtl {
 
 
 OdeUiCtl odeUiCtl(Str const text, OdeUiCtlDocking const dock, OdeRect rect) {
-    OdeUiCtl ret_ctl =
-        (OdeUiCtl) {.dirty = true, .ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, 0, 0), .visible = true, .text = text, .dock = dock, .rect = rect};
+    OdeUiCtl ret_ctl = (OdeUiCtl) {
+        .dirty = true, .ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, NULL, 0, 0), .visible = true, .text = text, .dock = dock, .rect = rect};
     return ret_ctl;
 }
 
