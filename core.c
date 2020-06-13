@@ -109,6 +109,25 @@ void odeInit() {
         odeDie("odeInit: getcwd", true);
     mem_bss.pos = ode.init.fs.cur_dir_path.len;
 
+    {
+        UInt env_count = 0;
+        for (UInt i = 0; __environ[i] != NULL; i += 1)
+            env_count += 1;
+        ode.init.env.names = ·sliceOf(Str, NULL, 0, env_count);
+        ode.init.env.values = ·sliceOf(Str, NULL, 0, env_count);
+        for (UInt i = 0; i < env_count; i += 1) {
+            Str env_pair = str(__environ[i]);
+            ºUInt idx_eq = strIndexOf(env_pair, strL("=", 1));
+            if (idx_eq.got) {
+                ·push(ode.init.env.names, strSub(env_pair, 0, idx_eq.it));
+                ·push(ode.init.env.values, strSub(env_pair, 1 + idx_eq.it, env_pair.len));
+            }
+        }
+        ode.init.fs.home_dir_path = odeEnv(str("HOME"));
+        while (ode.init.fs.home_dir_path.len > 0 && '/' == ode.init.fs.home_dir_path.at[ode.init.fs.home_dir_path.len - 1])
+            ode.init.fs.home_dir_path.len -= 1;
+    }
+
     ode.init.term.tty_fileno = open("/dev/tty", O_RDWR | O_NOCTTY);
     if (ode.init.term.tty_fileno == -1)
         odeDie("odeInit: open(/dev/tty)", true);

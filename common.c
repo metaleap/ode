@@ -96,8 +96,13 @@ struct OdeUiViewTerminal;
 
 struct Ode {
     struct Init {
+        struct Env {
+            Strs names;
+            Strs values;
+        } env;
         struct Fs {
             Str cur_dir_path;
+            Str home_dir_path;
             Strs argv_dir_paths;
             Strs argv_file_paths;
         } fs;
@@ -161,6 +166,13 @@ OdeSize size(UInt width, UInt height) {
 
 OdeRect rect(UInt x, UInt y, UInt width, UInt height) {
     return (OdeRect) {.pos = pos(x, y), .size = size(width, height)};
+}
+
+Str odeEnv(Str const name) {
+    for (UInt i = 0; i < ode.init.env.names.len; i += 1)
+        if (strEql(name, ode.init.env.names.at[i]))
+            return ode.init.env.values.at[i];
+    return ·len0(U8);
 }
 
 OdeCmd* odeCmd(Str const cmd_id, OdeCmdHandler const cmd_handler) {

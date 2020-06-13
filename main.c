@@ -14,7 +14,6 @@ PtrAny odeCmdQuit(struct OdeCmd const* const cmd, PtrAny const args, UInt const 
 
 int main() {
     odeInit();
-    odeDie(strZ(ode.init.fs.cur_dir_path), false);
     odeCmd(str("workbench.action.quit"), odeCmdQuit);
     odeUiInitMain();
 
