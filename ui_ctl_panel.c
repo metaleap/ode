@@ -59,7 +59,7 @@ Bool odeUiCtlPanelOnInput(OdeUiCtl* ctl_panel, Str const bytes) {
 }
 
 OdeUiCtlPanel* odeUiCtlPanel(OdeUiCtl base, OdeOrientation orientation, OdeUiCtlPanelMode mode, UInt const ctls_capacity) {
-    OdeUiCtlPanel* ret_panel = ·new(OdeUiCtlPanel);
+    OdeUiCtlPanel* ret_panel = ·new(OdeUiCtlPanel, NULL);
     base.on.render = odeUiCtlPanelOnRender;
     base.on.input = odeUiCtlPanelOnInput;
     base.ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, 0, ctls_capacity);

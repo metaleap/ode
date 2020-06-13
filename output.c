@@ -145,7 +145,7 @@ void odeRenderOutput(OdeUiCtl* ode_ui_main, OdeSize const ode_output_screen_size
                         };
                         state.style = cell->style;
                         if (ansis[state.style] == NULL || ansis[state.style][0] == 0) {
-                            Str ansi = newStr(0, 24, false);
+                            Str ansi = newStr(0, 24);
                             for (OdeGlyphStyleFlags st = ode_glyphstyle_bold; st <= ode_glyphstyle_overline; st += st)
                                 if ((state.style & st) == st) {
                                     for (UInt i = ((ansi.len == 0) ? 0 : 2); ansis[st][i] != 'm'; i += 1)

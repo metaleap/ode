@@ -6,7 +6,7 @@
 #include "ui_ctl_panel.c"
 
 static Bool onInputStatusbar(OdeUiCtl* ctl_panel_statusbar, Str const bytes) {
-    Strs hexes = ·sliceOf(Str, bytes.len, bytes.len);
+    Strs hexes = ·sliceOf(Str, NULL, bytes.len, bytes.len);
     for (UInt i = 0; i < bytes.len; i += 1)
         hexes.at[i] = uIntToStr(bytes.at[i], 2, 16);
     ctl_panel_statusbar->text =
