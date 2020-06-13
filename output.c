@@ -88,14 +88,13 @@ void odeRenderOutput(OdeUiCtl* ode_ui_main, OdeSize const ode_output_screen_size
 #define ode_output_screen_buf_size (64 * ode_output_screen_max_width * ode_output_screen_max_height)
     static U8 out_buf[ode_output_screen_buf_size];
     static Bool cells_dirty[ode_output_screen_max_width][ode_output_screen_max_height];
-    static OdeScreenCell state = {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
-    static OdeSize screen_size = (OdeSize) {0, 0};
+    static OdeScreenCell state;
+    static OdeSize screen_size;
+
     Bool const resized = (screen_size.width != ode_output_screen_size.width) || (screen_size.height != ode_output_screen_size.height);
     if (resized) {
-        if (screen_size.height != 0 && screen_size.width != 0) // actual-resize instead of mere init?
-            odeUiMainOnResized(&screen_size, &ode_output_screen_size);
+        odeUiMainOnResized(&screen_size, &ode_output_screen_size);
         screen_size = ode_output_screen_size;
-        odeUiCtlSetDirty(ode_ui_main, true, true);
         for (UInt x = 0; x < screen_size.width; x += 1)
             for (UInt y = 0; y < screen_size.height; y += 1) {
                 ode.output.screen.prep[x][y].rune.u32 = 0;

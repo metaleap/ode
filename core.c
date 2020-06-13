@@ -91,7 +91,6 @@ static void termRawOn() {
 
 static void termInit() {
     atexit(odeOnExit);
-    ode.init.term.did_tcsetattr = false;
     termRawOn();
     ode.init.term.did_tcsetattr = true;
 
@@ -108,7 +107,6 @@ void odeInit() {
     if (ode.init.fs.cur_dir_path.at == NULL)
         odeDie("odeInit: getcwd", true);
     mem_bss.pos = ode.init.fs.cur_dir_path.len;
-
     {
         UInt env_count = 0;
         for (UInt i = 0; __environ[i] != NULL; i += 1)
@@ -127,32 +125,19 @@ void odeInit() {
         while (ode.init.fs.home_dir_path.len > 0 && '/' == ode.init.fs.home_dir_path.at[ode.init.fs.home_dir_path.len - 1])
             ode.init.fs.home_dir_path.len -= 1;
     }
-
     ode.init.term.tty_fileno = open("/dev/tty", O_RDWR | O_NOCTTY);
     if (ode.init.term.tty_fileno == -1)
         odeDie("odeInit: open(/dev/tty)", true);
 
-    ode.stats.last_output_payload = 0;
-    ode.stats.num_renders = 0;
-    ode.stats.num_outputs = 0;
-    ode.input.exit_requested = false;
-    ode.input.screen_resized = false;
     ode.input.mouse.pos = pos(255, 255);
-    ode.input.mouse.btn_l_down = false;
-    ode.input.mouse.btn_m_down = false;
-    ode.input.mouse.btn_r_down = false;
-    ode.input.mouse.dragging = false;
     ode.input.all_commands = ·listOf(OdeCmd, NULL, 0, 8);
-    ode.output.colors = ·listOf(OdeRgbaColor, NULL, 0, 16);
 
-    Str const esc = strL(term_esc, 2);
+    ode.output.colors = ·listOf(OdeRgbaColor, NULL, 0, 16);
+    Str const esc = str(term_esc);
     for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
-        for (UInt y = 0; y < ode_output_screen_max_height; y += 1) {
-            ode.output.screen.real[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
-            ode.output.screen.prep[x][y] = (OdeScreenCell) {.color = {.bg = NULL, .fg = NULL, .ul3 = NULL}};
+        for (UInt y = 0; y < ode_output_screen_max_height; y += 1)
             ode.output.screen.term_esc_cursor_pos[x][y] =
                 str5(NULL, esc, uIntToStr(NULL, 1 + y, 1, 10), strL(";", 1), uIntToStr(NULL, 1 + x, 1, 10), strL("H", 1));
-        }
     updateScreenSize();
     if (signal(SIGWINCH, termOnResized) == SIG_ERR)
         odeDie("odeInit: signal", true);

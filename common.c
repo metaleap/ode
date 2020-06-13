@@ -126,11 +126,11 @@ struct Ode {
         struct Mouse {
             OdePos pos;
             struct {
-                Bool btn_l_down : 1;
-                Bool btn_r_down : 1;
-                Bool btn_m_down : 1;
-                Bool dragging : 1;
-            };
+                Bool left;
+                Bool right;
+                Bool middle;
+            } btn_down;
+            Bool dragging : 1;
         } mouse;
         OdeCmds all_commands;
         Bool exit_requested;

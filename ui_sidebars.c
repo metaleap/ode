@@ -29,7 +29,7 @@ void odeUiInitSidebarRight(UInt const ctls_cap) {
 }
 
 void odeUiInitSidebarBottom(UInt const ctls_cap) {
-    OdeUiSidebar sidebar = odeUiSidebar(str("Bottom Sidebar"), 9, ode_uictl_dock_bottom, ode_orient_horiz, ctls_cap);
+    OdeUiSidebar sidebar = odeUiSidebar(str("Bottom Sidebar"), 7, ode_uictl_dock_bottom, ode_orient_horiz, ctls_cap);
     sidebar.ui_panel.base.color.bg = rgba(0x48, 0x44, 0x48, 0xff);
     sidebar.ui_panel.base.style = ode_glyphstyle_italic | ode_glyphstyle_bold;
     ode.ui.sidebar_bottom = ·keep(OdeUiSidebar, NULL, &sidebar);
