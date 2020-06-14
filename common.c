@@ -9,9 +9,8 @@
 
 
 typedef enum OdeInputKind {
-    ode_input_bytes,
+    ode_input_str,
     ode_input_mouse,
-    ode_input_key,
 } OdeInputKind;
 
 typedef enum OdeGlyphStyleFlags {
@@ -157,7 +156,7 @@ struct Ode {
 
 typedef struct OdeInput {
     union OdeInputOf {
-        Str key_str;
+        Str string;
         struct OdeInputMouse {
             Bool scroll_up : 1;
             Bool scroll_down : 1;

@@ -9,14 +9,29 @@ typedef struct OdeUiStatusbar {
     OdeUiCtlPanel ui_panel;
 } OdeUiStatusbar;
 
-static Bool onInputStatusbar(OdeUiCtl* ctl_panel_statusbar, OdeInputs const inputs) {
-    // Strs hexes = ·sliceOf(Str, NULL, bytes.len, bytes.len);
-    // for (UInt i = 0; i < bytes.len; i += 1)
-    //     hexes.at[i] = uIntToStr(NULL, bytes.at[i], 2, 16);
-    // ctl_panel_statusbar->text =
-    //     str8(NULL, str("nR="), uIntToStr(NULL, ode.stats.num_renders, 1, 10), str(" nO="), uIntToStr(NULL, ode.stats.num_outputs, 1, 10),
-    //          str(" LP="), uIntToStr(NULL, ode.stats.last_output_payload, 1, 10), str("     x"), strConcat(NULL, hexes, 'x'));
-    // odeUiCtlSetDirty(ctl_panel_statusbar, true, true);
+static Bool onInputStatusbar(OdeUiCtl* ctl_panel_statusbar, MemHeap* mem_tmp, OdeInputs const inputs) {
+    static U8 str_buf[1 * 1024 * 1024];
+
+    Str text = (Str) {.at = &str_buf[0], .len = 0};
+    for (UInt i = 0; i < inputs.len; i += 1) {
+        OdeInput const input = inputs.at[i];
+        switch (input.kind) {
+            case ode_input_str: {
+                for (UInt b = 0; b < input.of.string.len; b += 1) {
+                    ·push(text, ' ');
+                    ·push(text, 'x');
+                    text.len += uintToBuf(&text.at[text.len], input.of.string.at[b], 2, 16, 0).len;
+                }
+            } break;
+            default: odeDie(strZ(uIntToStr(NULL, input.kind, 1, 10)), false);
+        }
+    }
+    text.at[text.len] = 0;
+
+    ctl_panel_statusbar->text =
+        str8(NULL, str("nR="), uIntToStr(NULL, ode.stats.num_renders, 1, 10), str(" nO="), uIntToStr(NULL, ode.stats.num_outputs, 1, 10),
+             str(" LP="), uIntToStr(NULL, ode.stats.last_output_payload, 1, 10), str("      "), text);
+    odeUiCtlSetDirty(ctl_panel_statusbar, true, true);
     return true;
 }
 

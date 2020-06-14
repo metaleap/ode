@@ -12,7 +12,7 @@ typedef struct OdeUiMain {
     OdeUiCtlPanel ui_panel;
 } OdeUiMain;
 
-static Bool onInputMain(OdeUiCtl* ctl_panel_main, OdeInputs const inputs) {
+static Bool onInputMain(OdeUiCtl* ctl_panel_main, MemHeap* mem_tmp, OdeInputs const inputs) {
     Bool ret_dirty = false;
     // if (bytes.len == 1)
     //     switch (bytes.at[0]) {
@@ -31,7 +31,7 @@ static Bool onInputMain(OdeUiCtl* ctl_panel_main, OdeInputs const inputs) {
     //     }
     if (ret_dirty)
         odeUiCtlSetDirty(ctl_panel_main, true, true);
-    ret_dirty = odeUiCtlPanelOnInput(ctl_panel_main, inputs) // usually not needed, but this is the root panel
+    ret_dirty = odeUiCtlPanelOnInput(ctl_panel_main, mem_tmp, inputs) // usually not needed, but this is the root panel
                 | ret_dirty;
     return ret_dirty;
 }
