@@ -19,7 +19,7 @@ static Bool onInputStatusbar(OdeUiCtl* ctl_panel_statusbar, MemHeap* mem_tmp, Od
         switch (input.kind) {
             case ode_input_str: {
                 for (UInt b = 0; b < input.of.string.len; b += 1) {
-                    ·push(text, 'x');
+                    ·push(text, 'd');
                     text.len += uintToBuf(&text.at[text.len], input.of.string.at[b], 2, 16, 0).len;
                 }
             } break;
