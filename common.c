@@ -6,6 +6,7 @@
 
 #define ode_output_screen_max_width 256
 #define ode_output_screen_max_height 256
+#define term_esc "\x1b["
 
 
 typedef enum OdeInputKind {
@@ -160,7 +161,7 @@ typedef struct OdeInput {
         struct OdeInputMouse {
             Bool scroll_up : 1;
             Bool scroll_down : 1;
-            Bool click : 1;
+            Bool mouse_move : 1;
             Bool mouse_down : 1;
             Bool mouse_up : 1;
             Bool btn_l : 1;
@@ -194,15 +195,19 @@ OdeRgbaColor* rgba(U8 const r, U8 const g, U8 const b, U8 const a) {
     return ·last(ode.output.colors);
 }
 
-OdePos pos(UInt x, UInt y) {
+OdePos pos(UInt const x, UInt const y) {
     return (OdePos) {.x = x, .y = y};
 }
 
-OdeSize size(UInt width, UInt height) {
+Bool posEql(OdePos const p1, OdePos const p2) {
+    return (p1.x == p2.x) && (p1.y == p2.y);
+}
+
+OdeSize size(UInt const width, UInt const height) {
     return (OdeSize) {.width = width, .height = height};
 }
 
-OdeRect rect(UInt x, UInt y, UInt width, UInt height) {
+OdeRect rect(UInt const x, UInt const y, UInt const width, UInt const height) {
     return (OdeRect) {.pos = pos(x, y), .size = size(width, height)};
 }
 

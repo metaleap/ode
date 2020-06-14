@@ -22,6 +22,8 @@ Bool odeProcessInput() {
             odeDie("odeProcessInput: read", true);
     }
     OdeInputs inputs = {.at = &inputs_buf[0], .len = 0};
+#define ·isEsc(¹the_str__, ²the_len__, ¹the_min_len__)                                                                                       \
+    (((i + (¹the_min_len__)) <= ((UInt)n_bytes_read)) && strEq((¹the_str__), strL(&buf[i], (²the_len__)), (²the_len__)))
     if (n_bytes_read > 0) {
         for (UInt i = 0, max = (UInt)n_bytes_read; i < max; i += 1) {
             for (UInt j = 1; j < 7; j += 1)
@@ -35,11 +37,11 @@ Bool odeProcessInput() {
                 }
                 bracketed_paste.ptr[bracketed_paste.len] = buf[i];
                 bracketed_paste.len += 1;
-                if (strEq(&last7[1], strL("\x1b[201~", 6), 6)) {
+                if (strEq(&last7[1], strL(term_esc "201~", 6), 6)) {
                     ·assert(mem_tmp.ptr == NULL);
                     mem_tmp.cap = 4096 + memHeapSize(&bracketed_paste, true);
                     U8* const ptr = memHeapAlloc(&mem_tmp, memHeapSize(&bracketed_paste, false));
-                    UInt const len = memHeapCopyTo(&bracketed_paste, ptr);
+                    UInt const len = memHeapCopy(&bracketed_paste, ptr);
                     memHeapFree(&bracketed_paste);
                     bracketed_paste.ptr = NULL;
                     ·push(inputs, ((OdeInput) {
@@ -47,10 +49,19 @@ Bool odeProcessInput() {
                                       .of = {.string = (Str) {.len = len - 6, .at = ptr}},
                                   }));
                 }
-            } else if (((n_bytes_read - i) >= 6) && strEq("\x1b[200~", strL(&buf[i], 6), 6)) {
+            } else if (·isEsc(term_esc "200~", 6, 6)) {
                 memHeapAlloc(&bracketed_paste, 1);
                 bracketed_paste.len -= 1;
                 i += 5;
+            } else if (·isEsc(term_esc "m", 3, 6)) { // TODO: change m to M once done
+                OdePos const old_pos = ode.input.mouse.pos;
+                ode.input.mouse.pos = (OdePos) {.x = buf[i + 4] - 33, .y = buf[i + 5] - 33};
+                ·push(inputs, ((OdeInput) {.kind = ode_input_mouse,
+                                           .of = {.mouse = {
+                                                      .scroll_up = buf[i + 3] == 0x61,
+                                                      .scroll_down = buf[i + 3] == 0x60,
+                                                      .mouse_move = !posEql(old_pos, ode.input.mouse.pos),
+                                                  }}}));
             } else {
                 if (buf[i] == (0x1f & 'q'))
                     ode.input.exit_requested = true;

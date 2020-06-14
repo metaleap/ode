@@ -12,10 +12,6 @@
 #include "utils_std_mem.c"
 
 
-#define term_esc "\x1b["
-
-
-
 static void termClearScreen() {
     write(ode.init.term.tty_fileno, term_esc "2J", 2 + 2);
 }
