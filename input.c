@@ -13,7 +13,7 @@ Bool odeProcessInput() {
     static MemHeap bracketed_paste = (MemHeap) {.cap = (4 * 1024), .kind = mem_heap_pages_malloc};
     static U8 last7[7];
 
-    MemHeap mem_tmp = (MemHeap) {.kind = mem_heap_pages_malloc, .cap = 1 * 1024 * 1024};
+    MemHeap mem_tmp = (MemHeap) {.kind = mem_heap_pages_malloc, .cap = 4 * 1024};
     Int n_bytes_read = read(ode.init.term.tty_fileno, buf, ode_input_buf_size);
     if (n_bytes_read < 0) {
         if (errno == EAGAIN)
@@ -35,21 +35,22 @@ Bool odeProcessInput() {
                 }
                 bracketed_paste.ptr[bracketed_paste.len] = buf[i];
                 bracketed_paste.len += 1;
-                if (strEq((CStr)(&last7[1]), str("\x1b[201~"), 6)) {
+                if (strEq(&last7[1], strL("\x1b[201~", 6), 6)) {
                     ·assert(mem_tmp.ptr == NULL);
-                    mem_tmp.cap = 1024 + memHeapSize(&bracketed_paste);
-                    U8* const ptr = memHeapAlloc(&mem_tmp, mem_tmp.cap - 1024);
+                    mem_tmp.cap = 4096 + memHeapSize(&bracketed_paste, true);
+                    U8* const ptr = memHeapAlloc(&mem_tmp, memHeapSize(&bracketed_paste, false));
                     UInt const len = memHeapCopyTo(&bracketed_paste, ptr);
                     memHeapFree(&bracketed_paste);
                     bracketed_paste.ptr = NULL;
                     ·push(inputs, ((OdeInput) {
                                       .kind = ode_input_str,
-                                      .of = {.string = (Str) {.len = len - 12, .at = ptr + 6}},
+                                      .of = {.string = (Str) {.len = len - 6, .at = ptr}},
                                   }));
                 }
-            } else if (strEq((CStr)(&last7[1]), str("\x1b[200~"), 6)) {
+            } else if (((n_bytes_read - i) >= 6) && strEq("\x1b[200~", strL(&buf[i], 6), 6)) {
                 memHeapAlloc(&bracketed_paste, 1);
                 bracketed_paste.len -= 1;
+                i += 5;
             } else {
                 if (buf[i] == (0x1f & 'q'))
                     ode.input.exit_requested = true;

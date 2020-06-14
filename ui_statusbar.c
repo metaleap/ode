@@ -14,11 +14,11 @@ static Bool onInputStatusbar(OdeUiCtl* ctl_panel_statusbar, MemHeap* mem_tmp, Od
 
     Str text = (Str) {.at = &str_buf[0], .len = 0};
     for (UInt i = 0; i < inputs.len; i += 1) {
+        ·push(text, ' ');
         OdeInput const input = inputs.at[i];
         switch (input.kind) {
             case ode_input_str: {
                 for (UInt b = 0; b < input.of.string.len; b += 1) {
-                    ·push(text, ' ');
                     ·push(text, 'x');
                     text.len += uintToBuf(&text.at[text.len], input.of.string.at[b], 2, 16, 0).len;
                 }
