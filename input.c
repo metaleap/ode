@@ -7,6 +7,93 @@
 
 #define ode_input_buf_size (1 * 1024 * 1024)
 
+void odeInitKnownHotKeys() {
+    OdeHotKeys k = ode.input.all.hotkeys;
+#define ·_ ·append
+#define ·__ (OdeHotKey)
+
+    ·_(k, (·__ {.title = str("enter"), .key = ode_key_enter, .esc_seq = str("\x0d")}));
+    ·_(k, (·__ {.title = str("backspace"), .key = ode_key_back, .esc_seq = str("\x7f")}));
+
+    ·_(k, (·__ {.title = str("f1"), .key = ode_key_f1, .esc_seq = str("\x1b\x4f\x50")}));
+    ·_(k, (·__ {.title = str("f2"), .key = ode_key_f2, .esc_seq = str("\x1b\x4f\x51")}));
+    ·_(k, (·__ {.title = str("f3"), .key = ode_key_f3, .esc_seq = str("\x1b\x4f\x52")}));
+    ·_(k, (·__ {.title = str("f4"), .key = ode_key_f4, .esc_seq = str("\x1b\x4f\x53")}));
+    ·_(k, (·__ {.title = str("f5"), .key = ode_key_f5, .esc_seq = str("\x1b\x5b\x31\x35\x7e")}));
+    ·_(k, (·__ {.title = str("f6"), .key = ode_key_f6, .esc_seq = str("\x1b\x5b\x31\x37\x7e")}));
+    ·_(k, (·__ {.title = str("f7"), .key = ode_key_f7, .esc_seq = str("\x1b\x5b\x31\x38\x7e")}));
+    ·_(k, (·__ {.title = str("f8"), .key = ode_key_f8, .esc_seq = str("\x1b\x5b\x31\x39\x7e")}));
+    ·_(k, (·__ {.title = str("f9"), .key = ode_key_f9, .esc_seq = str("\x1b\x5b\x32\x30\x7e")}));
+    ·_(k, (·__ {.title = str("f10"), .key = ode_key_f10, .esc_seq = str("\x1b\x5b\x32\x31\x7e")}));
+    ·_(k, (·__ {.title = str("f11"), .key = ode_key_f11, .esc_seq = str("\x1b\x5b\x32\x33\x7e")}));
+    ·_(k, (·__ {.title = str("f12"), .key = ode_key_f12, .esc_seq = str("\x1b\x5b\x32\x34\x7e")}));
+    ·_(k, (·__ {.title = str("left"), .key = ode_key_arr_l, .esc_seq = str("\x1b\x5b\x44")}));
+    ·_(k, (·__ {.title = str("down"), .key = ode_key_arr_d, .esc_seq = str("\x1b\x5b\x42")}));
+    ·_(k, (·__ {.title = str("up"), .key = ode_key_arr_u, .esc_seq = str("\x1b\x5b\x41")}));
+    ·_(k, (·__ {.title = str("right"), .key = ode_key_arr_r, .esc_seq = str("\x1b\x5b\x43")}));
+    ·_(k, (·__ {.title = str("end"), .key = ode_key_end, .esc_seq = str("\x1b\x5b\x46")}));
+    ·_(k, (·__ {.title = str("home"), .key = ode_key_home, .esc_seq = str("\x1b\x5b\x48")}));
+    ·_(k, (·__ {.title = str("insert"), .key = ode_key_ins, .esc_seq = str("\x1b\x5b\x32\x7e")}));
+    ·_(k, (·__ {.title = str("delete"), .key = ode_key_del, .esc_seq = str("\x1b\x5b\x33\x7e")}));
+    ·_(k, (·__ {.title = str("pageup"), .key = ode_key_pgup, .esc_seq = str("\x1b\x5b\x35\x7e")}));
+    ·_(k, (·__ {.title = str("pagedown"), .key = ode_key_pgdn, .esc_seq = str("\x1b\x5b\x36\x7e")}));
+    ·_(k, (·__ {.title = str("alt+escape"), .key = ode_key_esc, .alt = true, .esc_seq = str("\x1b\x1b")}));
+
+    ·forEach(OdeHotKey, hk, k, {
+        if ((hk->key >= ode_key_f1 && hk->key <= ode_key_f4) && !(hk->alt || hk->ctl || hk->shift)) {
+            Str const suff = strSub(hk->esc_seq, hk->esc_seq.len - 1, hk->esc_seq.len);
+            ·_(k, (·__ {.title = str2(NULL, str("ctrl+"), hk->title),
+                        .esc_seq = str2(NULL, str("\x1b\x5b\x31\x3b\x35"), suff),
+                        .key = hk->key,
+                        .ctl = true}));
+            ·_(k, (·__ {.title = str2(NULL, str("alt+"), hk->title),
+                        .esc_seq = str2(NULL, str("\x1b\x5b\x31\x3b\x33"), suff),
+                        .key = hk->key,
+                        .alt = true}));
+            ·_(k, (·__ {.title = str2(NULL, str("shift+"), hk->title),
+                        .esc_seq = str2(NULL, str("\x1b\x5b\x31\x3b\x32"), suff),
+                        .key = hk->key,
+                        .shift = true}));
+            ·_(k, (·__ {.title = str2(NULL, str("ctrl+shift+"), hk->title),
+                        .esc_seq = str2(NULL, str("\x1b\x5b\x31\x3b\x36"), suff),
+                        .key = hk->key,
+                        .ctl = true,
+                        .shift = true}));
+            ·_(k, (·__ {.title = str2(NULL, str("alt+shift+"), hk->title),
+                        .esc_seq = str2(NULL, str("\x1b\x5b\x31\x3b\x34"), suff),
+                        .key = hk->key,
+                        .alt = true,
+                        .shift = true}));
+        }
+    });
+    // ·_(k, (·__ {.title = str("f2"), .key = ode_key_f2, .esc_seq = str("\x1b\x4f\x51")}));
+    // ·_(k, (·__ {.title = str("f3"), .key = ode_key_f3, .esc_seq = str("\x1b\x4f\x52")}));
+    // ·_(k, (·__ {.title = str("f4"), .key = ode_key_f4, .esc_seq = str("\x1b\x4f\x53")}));
+    // ·_(k, (·__ {.title = str("f5"), .key = ode_key_f5, .esc_seq = str("\x1b\x5b\x31\x35\x7e")}));
+    // ·_(k, (·__ {.title = str("f6"), .key = ode_key_f6, .esc_seq = str("\x1b\x5b\x31\x37\x7e")}));
+    // ·_(k, (·__ {.title = str("f7"), .key = ode_key_f7, .esc_seq = str("\x1b\x5b\x31\x38\x7e")}));
+    // ·_(k, (·__ {.title = str("f8"), .key = ode_key_f8, .esc_seq = str("\x1b\x5b\x31\x39\x7e")}));
+    // ·_(k, (·__ {.title = str("f9"), .key = ode_key_f9, .esc_seq = str("\x1b\x5b\x32\x30\x7e")}));
+    // ·_(k, (·__ {.title = str("f10"), .key = ode_key_f10, .esc_seq = str("\x1b\x5b\x32\x31\x7e")}));
+    // ·_(k, (·__ {.title = str("f11"), .key = ode_key_f11, .esc_seq = str("\x1b\x5b\x32\x33\x7e")}));
+    // ·_(k, (·__ {.title = str("f12"), .key = ode_key_f12, .esc_seq = str("\x1b\x5b\x32\x34\x7e")}));
+    // ·_(k, (·__ {.title = str("enter"), .key = ode_key_enter, .esc_seq = str("\x0d")}));
+    // ·_(k, (·__ {.title = str("backspace"), .key = ode_key_back, .esc_seq = str("\x7f")}));
+    // ·_(k, (·__ {.title = str("left"), .key = ode_key_arr_l, .esc_seq = str("\x1b\x5b\x44")}));
+    // ·_(k, (·__ {.title = str("down"), .key = ode_key_arr_d, .esc_seq = str("\x1b\x5b\x42")}));
+    // ·_(k, (·__ {.title = str("up"), .key = ode_key_arr_u, .esc_seq = str("\x1b\x5b\x41")}));
+    // ·_(k, (·__ {.title = str("right"), .key = ode_key_arr_r, .esc_seq = str("\x1b\x5b\x43")}));
+    // ·_(k, (·__ {.title = str("end"), .key = ode_key_end, .esc_seq = str("\x1b\x5b\x46")}));
+    // ·_(k, (·__ {.title = str("home"), .key = ode_key_home, .esc_seq = str("\x1b\x5b\x48")}));
+    // ·_(k, (·__ {.title = str("insert"), .key = ode_key_ins, .esc_seq = str("\x1b\x5b\x32\x7e")}));
+    // ·_(k, (·__ {.title = str("delete"), .key = ode_key_del, .esc_seq = str("\x1b\x5b\x33\x7e")}));
+    // ·_(k, (·__ {.title = str("pageup"), .key = ode_key_pgup, .esc_seq = str("\x1b\x5b\x35\x7e")}));
+    // ·_(k, (·__ {.title = str("pagedown"), .key = ode_key_pgdn, .esc_seq = str("\x1b\x5b\x36\x7e")}));
+
+
+    ode.input.all.hotkeys = k;
+}
+
 Bool odeProcessInput() {
     static U8 buf[ode_input_buf_size];
     static OdeInput inputs_buf[ode_input_buf_size];
@@ -53,22 +140,87 @@ Bool odeProcessInput() {
                 memHeapAlloc(&bracketed_paste, 1);
                 bracketed_paste.len -= 1;
                 i += 5;
-            } else if (·isEsc(term_esc "m", 3, 6)) { // TODO: change m to M once done
-                OdePos const old_pos = ode.input.mouse.pos;
-                ode.input.mouse.pos = (OdePos) {.x = buf[i + 4] - 33, .y = buf[i + 5] - 33};
-                ·push(inputs, ((OdeInput) {.kind = ode_input_mouse,
-                                           .of = {.mouse = {
-                                                      .scroll_up = buf[i + 3] == 0x61,
-                                                      .scroll_down = buf[i + 3] == 0x60,
-                                                      .mouse_move = !posEql(old_pos, ode.input.mouse.pos),
-                                                  }}}));
+            } else if (·isEsc(term_esc "M", 3, 6)) {
+                OdeMouseState const old = ode.input.mouse;
+                OdeMouseState new = old;
+                new.pos = (OdePos) {.x = buf[i + 4] - 33, .y = buf[i + 5] - 33};
+                Bool const m_pos_eq = posEql(old.pos, new.pos);
+
+                U8 const m = buf[i + 3];
+                Bool const m_scroll_up =
+                    (m == 0x61) || (m == 0x71) || (m == 0x69) || (m == 0x65) || (m == 0x75) || (m == 0x79) || (m == 0x6d) || (m == 0x7d);
+                Bool const m_scroll_down =
+                    (m == 0x60) || (m == 0x70) || (m == 0x68) || (m == 0x64) || (m == 0x74) || (m == 0x78) || (m == 0x6c) || (m == 0x7c);
+                // Bool const m_any_up = // not currently needed
+                //     (m == 0x23) || (m == 0x33) || (m == 0x2b) || (m == 0x27) || (m == 0x37) || (m == 0x3b) || (m == 0x2f) || (m == 0x3f);
+                // Bool const m_any_move = // not currently needed
+                //     (m == 0x43) || (m == 0x53) || (m == 0x4b) || (m == 0x47) || (m == 0x57) || (m == 0x5b) || (m == 0x4f) || (m == 0x5f);
+                Bool const m_down_l =
+                    (m == 0x20) || (m == 0x30) || (m == 0x28) || (m == 0x24) || (m == 0x34) || (m == 0x38) || (m == 0x2c) || (m == 0x3c);
+                Bool const m_drag_l =
+                    (m == 0x40) || (m == 0x50) || (m == 0x48) || (m == 0x44) || (m == 0x54) || (m == 0x58) || (m == 0x4c) || (m == 0x5c);
+                Bool const m_down_m =
+                    (m == 0x21) || (m == 0x31) || (m == 0x29) || (m == 0x25) || (m == 0x35) || (m == 0x39) || (m == 0x2d) || (m == 0x3d);
+                Bool const m_drag_m =
+                    (m == 0x41) || (m == 0x51) || (m == 0x49) || (m == 0x45) || (m == 0x55) || (m == 0x59) || (m == 0x4d) || (m == 0x5d);
+                Bool const m_down_r =
+                    (m == 0x22) || (m == 0x32) || (m == 0x2a) || (m == 0x26) || (m == 0x36) || (m == 0x3a) || (m == 0x2e) || (m == 0x3e);
+                Bool const m_drag_r =
+                    (m == 0x42) || (m == 0x52) || (m == 0x4a) || (m == 0x46) || (m == 0x56) || (m == 0x5a) || (m == 0x4e) || (m == 0x5e);
+                new.dragging = m_drag_l || m_drag_m || m_drag_r;
+                new.btn_down.left = m_down_l || m_drag_l;
+                new.btn_down.mid = m_down_m || m_drag_m;
+                new.btn_down.right = m_down_r || m_drag_r;
+                OdeInput evt = (OdeInput) {
+                    .kind = ode_input_mouse,
+                    .of = {.mouse = {.scroll = m_scroll_down || m_scroll_up,
+                                     .down = m_scroll_down || m_down_l || m_down_m || m_down_r,
+                                     .btn_l = m_down_l || m_drag_l,
+                                     .btn_m = m_down_m || m_drag_m,
+                                     .btn_r = m_down_r || m_drag_r,
+                                     .did_drop = old.dragging && !new.dragging,
+                                     .did_move = !m_pos_eq,
+                                     .did_click =
+                                         m_pos_eq && (old.btn_down.left || old.btn_down.mid || old.btn_down.right)
+                                         && !(new.btn_down.left || new.btn_down.mid || new.btn_down.right || old.dragging || new.dragging)}},
+                    .mod_key = {
+                        .ctl = ((m == 0x71 || m == 0x75 || m == 0x79 || m == 0x7d) || (m == 0x70 || m == 0x74 || m == 0x78 || m == 0x7c))
+                               || (m >= 0x30 && m <= 0x3f) || (m >= 0x50 && m <= 0x5f),
+                        .alt = ((m == 0x69 || m == 0x79 || m == 0x6d || m == 0x7d) || (m == 0x68 || m == 0x78 || m == 0x6c || m == 0x7c))
+                               || (m >= 0x28 && m <= 0x2f) || (m >= 0x38 && m <= 0x3f) || (m >= 0x48 && m <= 0x4f)
+                               || (m >= 0x58 && m <= 0x5f),
+                        .shift =
+                            ((m == 0x65 || m == 0x75 || m == 0x6d || m == 0x7d) || (m == 0x64 || m == 0x74 || m == 0x6c || m == 0x7c))
+                            || ((m >= 0x24 && m <= 0x27) || (m >= 0x34 && m <= 0x37) || (m >= 0x44 && m <= 0x47) || (m >= 0x54 && m <= 0x57))
+                            || ((m >= 0x2c && m <= 0x2f) || (m >= 0x3c && m <= 0x3f) || (m >= 0x4c && m <= 0x4f)
+                                || (m >= 0x5c && m <= 0x5f))}};
+                if (evt.of.mouse.did_click || evt.of.mouse.did_drop) {
+                    evt.of.mouse.btn_l = old.btn_down.left;
+                    evt.of.mouse.btn_m = old.btn_down.mid;
+                    evt.of.mouse.btn_r = old.btn_down.right;
+                }
+                ·push(inputs, evt);
+                ode.input.mouse = new;
+                i += 5;
             } else {
-                if (buf[i] == (0x1f & 'q'))
+                OdeHotKey* hotkey = NULL;
+                ·forEach(OdeHotKey, hk, ode.input.all.hotkeys, {
+                    if ((buf[i] != '\x1b') && iˇhk > 1)
+                        break;
+                    if (·isEsc(hk->esc_seq.at, hk->esc_seq.len, hk->esc_seq.len)) {
+                        hotkey = hk;
+                        break;
+                    }
+                });
+                if (hotkey != NULL) {
+                    ·push(inputs, ((OdeInput) {.kind = ode_input_hotkey,
+                                               .of = {.key = hotkey->key},
+                                               .mod_key = {.ctl = hotkey->ctl, .alt = hotkey->alt, .shift = hotkey->shift}}));
+                    // i += (hotkey->esc_seq.len - 1);
+                } else if (buf[i] == (0x1f & 'q'))
                     ode.input.exit_requested = true;
-                ·push(inputs, ((OdeInput) {
-                                  .kind = ode_input_str,
-                                  .of = {.string = (Str) {.at = &buf[i], .len = 1}},
-                              }));
+                else
+                    ·push(inputs, ((OdeInput) {.kind = ode_input_str, .of = {.string = (Str) {.at = &buf[i], .len = 1}}}));
             }
         }
     }

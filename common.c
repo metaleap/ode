@@ -1,4 +1,5 @@
 #pragma once
+#pragma clang diagnostic ignored "-Wfixed-enum-extension"
 #include <termios.h>
 
 #include "utils_std_basics.c"
@@ -12,6 +13,7 @@
 typedef enum OdeInputKind {
     ode_input_str,
     ode_input_mouse,
+    ode_input_hotkey,
 } OdeInputKind;
 
 typedef enum OdeGlyphStyleFlags {
@@ -98,7 +100,60 @@ struct OdeUiViewDiags;
 struct OdeUiViewLogOutput;
 struct OdeUiViewTerminal;
 
+typedef enum OdeKey : UInt {
+    ode_key_none,
+    ode_key_tab = 0x09,
+    ode_key_f1 = 0x1b4f50,
+    ode_key_f2 = 0x1b4f51,
+    ode_key_f3 = 0x1b4f52,
+    ode_key_f4 = 0x1b4f53,
+    ode_key_f5 = 0x1b5b31357e,
+    ode_key_f6 = 0x1b5b31377e,
+    ode_key_f7 = 0x1b5b31387e,
+    ode_key_f8 = 0x1b5b31397e,
+    ode_key_f9 = 0x1b5b32307e,
+    ode_key_f10 = 0x1b5b32317e,
+    ode_key_f11 = 0x1b5b32337e,
+    ode_key_f12 = 0x1b5b32347e,
+    ode_key_enter = 0x0d,
+    ode_key_esc = 0x1b,
+    ode_key_back = 0x7f,
+    ode_key_arr_l = 0x1b5b44,
+    ode_key_arr_d = 0x1b5b42,
+    ode_key_arr_u = 0x1b5b41,
+    ode_key_arr_r = 0x1b5b43,
+    ode_key_end = 0x1b5b46,
+    ode_key_home = 0x1b5b48,
+    ode_key_ins = 0x1b5b327e,
+    ode_key_del = 0x1b5b337e,
+    ode_key_pgup = 0x1b5b357e,
+    ode_key_pgdn = 0x1b5b367e,
+} OdeKey;
+
+typedef struct OdeHotKey {
+    Str title;
+    Str esc_seq;
+    struct {
+        OdeKey key;
+        Bool ctl : 1;
+        Bool alt : 1;
+        Bool shift : 1;
+    };
+} OdeHotKey;
+typedef ·ListOf(OdeHotKey) OdeHotKeys;
+
+typedef struct OdeMouseState {
+    OdePos pos;
+    struct {
+        Bool left;
+        Bool right;
+        Bool mid;
+    } btn_down;
+    Bool dragging : 1;
+} OdeMouseState;
+
 typedef struct termios Termios;
+
 struct Ode {
     struct Init {
         struct Env {
@@ -123,16 +178,11 @@ struct Ode {
         UInt last_output_payload;
     } stats;
     struct Input {
-        struct Mouse {
-            OdePos pos;
-            struct {
-                Bool left;
-                Bool right;
-                Bool middle;
-            } btn_down;
-            Bool dragging : 1;
-        } mouse;
-        OdeCmds all_commands;
+        OdeMouseState mouse;
+        struct {
+            OdeCmds commands;
+            OdeHotKeys hotkeys;
+        } all;
         Bool exit_requested;
         Bool screen_resized;
     } input;
@@ -159,19 +209,20 @@ typedef struct OdeInput {
     union OdeInputOf {
         Str string;
         struct OdeInputMouse {
-            Bool scroll_up : 1;
-            Bool scroll_down : 1;
-            Bool mouse_move : 1;
-            Bool mouse_down : 1;
-            Bool mouse_up : 1;
+            Bool scroll : 1;
+            Bool down : 1;
             Bool btn_l : 1;
             Bool btn_m : 1;
             Bool btn_r : 1;
+            Bool did_drop : 1;
+            Bool did_move : 1;
+            Bool did_click : 1;
         } mouse;
+        OdeKey key;
     } of;
     OdeInputKind kind;
     struct {
-        Bool ctrl : 1;
+        Bool ctl : 1;
         Bool alt : 1;
         Bool shift : 1;
     } mod_key;
@@ -219,12 +270,20 @@ Str odeEnv(Str const name) {
 }
 
 OdeCmd* odeCmd(Str const cmd_id, OdeCmdHandler const cmd_handler) {
-    for (UInt i = 0; i < ode.input.all_commands.len; i += 1)
-        if (strEql(cmd_id, ode.input.all_commands.at[i].id))
-            return &ode.input.all_commands.at[i];
+    for (UInt i = 0; i < ode.input.all.commands.len; i += 1)
+        if (strEql(cmd_id, ode.input.all.commands.at[i].id))
+            return &ode.input.all.commands.at[i];
     ·assert(cmd_handler != NULL);
-    ·append(ode.input.all_commands, ((OdeCmd) {.id = cmd_id, .handler = cmd_handler}));
-    return ·last(ode.input.all_commands);
+    ·append(ode.input.all.commands, ((OdeCmd) {.id = cmd_id, .handler = cmd_handler}));
+    return ·last(ode.input.all.commands);
+}
+
+OdeHotKey* odeHotKey(OdeKey const key, Bool const ctl, Bool const alt, Bool const shift) {
+    ·forEach(OdeHotKey, hk, ode.input.all.hotkeys, {
+        if (hk->key == key && hk->ctl == ctl && hk->alt == alt && hk->shift == shift)
+            return hk;
+    });
+    return NULL;
 }
 
 void odeScreenClearRectText(OdeRect const* const rect);

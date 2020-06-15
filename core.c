@@ -126,7 +126,10 @@ void odeInit() {
         odeDie("odeInit: open(/dev/tty)", true);
 
     ode.input.mouse.pos = pos(255, 255);
-    ode.input.all_commands = ·listOf(OdeCmd, NULL, 0, 8);
+    ode.input.all.commands = ·listOf(OdeCmd, NULL, 0, 8);
+    ode.input.all.hotkeys = ·listOf(OdeHotKey, NULL, 0, 48);
+    void odeInitKnownHotKeys();
+    odeInitKnownHotKeys();
 
     ode.output.colors = ·listOf(OdeRgbaColor, NULL, 0, 16);
     Str const esc = str(term_esc);
