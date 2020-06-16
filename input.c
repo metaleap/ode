@@ -82,14 +82,20 @@ void odeInitKnownHotKeys() {
         }
     }
 
-    // { // now reorder such that all \x1b-prefixed hotkeys follow all non-\x1b ones. this will later short-cut the search on each keypress
-    //     for (UInt i = 0; i < k.len; i += 1)
-    //         if (k.at[i].esc_seq.at[0] == '\x1b') {
-    //             ode.input.hotkeys_idx_1b = i;
-    //             break;
-    //         }
-    //     odeDie(strZ(uIntToStr(NULL, ode.input.hotkeys_idx_1b, 1, 10)), false);
-    // }
+    { // now reorder such that all \x1b-prefixed hotkeys follow all non-\x1b ones. at runtime lets us short-circuit the search per keypress
+        for (UInt i = 0; i < k.len; i += 1)
+            if (k.at[i].esc_seq.at[0] == '\x1b') {
+                ode.input.hotkeys_idx_esc = i;
+                break;
+            }
+        for (UInt i = ode.input.hotkeys_idx_esc + 1; i < k.len; i += 1)
+            if (k.at[i].esc_seq.at[0] != '\x1b') {
+                OdeHotKey const copy = k.at[i];
+                k.at[i] = k.at[ode.input.hotkeys_idx_esc];
+                k.at[ode.input.hotkeys_idx_esc] = copy;
+                ode.input.hotkeys_idx_esc += 1;
+            }
+    }
 
     ode.input.all.hotkeys = k;
 }
@@ -113,6 +119,7 @@ Bool odeProcessInput() {
     (((i + (¹the_min_len__)) <= ((UInt)n_bytes_read)) && strEq((¹the_str__), strL(&buf[i], (²the_len__)), (²the_len__)))
     if (n_bytes_read > 0) {
         for (UInt i = 0, max = (UInt)n_bytes_read; i < max; i += 1) {
+            Bool const is_esc = (buf[i] == 0x1b);
             for (UInt j = 1; j < 7; j += 1)
                 last7[j - 1] = last7[j];
             last7[6] = buf[i];
@@ -136,11 +143,11 @@ Bool odeProcessInput() {
                                       .of = {.string = (Str) {.len = len - 6, .at = ptr}},
                                   }));
                 }
-            } else if (·isEsc(term_esc "200~", 6, 6)) {
+            } else if (is_esc && ·isEsc(term_esc "200~", 6, 6)) {
                 memHeapAlloc(&bracketed_paste, 1);
                 bracketed_paste.len -= 1;
                 i += 5;
-            } else if (·isEsc(term_esc "M", 3, 6)) {
+            } else if (is_esc && ·isEsc(term_esc "M", 3, 6)) {
                 OdeMouseState const old = ode.input.mouse;
                 OdeMouseState new = old;
                 new.pos = (OdePos) {.x = buf[i + 4] - 33, .y = buf[i + 5] - 33};
@@ -205,6 +212,8 @@ Bool odeProcessInput() {
             } else {
                 OdeHotKey* hotkey = NULL;
                 ·forEach(OdeHotKey, hk, ode.input.all.hotkeys, {
+                    if (iˇhk >= ode.input.hotkeys_idx_esc && !is_esc)
+                        break;
                     if (·isEsc(hk->esc_seq.at, hk->esc_seq.len, hk->esc_seq.len)) {
                         hotkey = hk;
                         break;
