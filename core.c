@@ -127,7 +127,7 @@ void odeInit() {
 
     ode.input.mouse.pos = pos(255, 255);
     ode.input.all.commands = ·listOf(OdeCmd, NULL, 0, 8);
-    ode.input.all.hotkeys = ·listOf(OdeHotKey, NULL, 0, 48);
+    ode.input.all.hotkeys = ·listOf(OdeHotKey, NULL, 0, 320);
     void odeInitKnownHotKeys();
     odeInitKnownHotKeys();
 

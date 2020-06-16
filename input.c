@@ -39,57 +39,57 @@ void odeInitKnownHotKeys() {
     ·_(k, (·__ {.title = str("pagedown"), .key = ode_key_pgdn, .esc_seq = str("\x1b\x5b\x36\x7e")}));
     ·_(k, (·__ {.title = str("alt+escape"), .key = ode_key_esc, .alt = true, .esc_seq = str("\x1b\x1b")}));
 
+    static CStr titles[] = {"shift+", "alt+", "alt+shift+", "ctrl+", "ctrl+shift+", "ctrl+alt+", "ctrl+alt+shift+"};
+    static CStr fkey_infixes[] = {"\x32", "\x33", "\x34", "\x35", "\x36", "\x37", "\x38"}; // order matches the above
     ·forEach(OdeHotKey, hk, k, {
-        if ((hk->key >= ode_key_f1 && hk->key <= ode_key_f4) && !(hk->alt || hk->ctl || hk->shift)) {
-            Str const suff = strSub(hk->esc_seq, hk->esc_seq.len - 1, hk->esc_seq.len);
-            ·_(k, (·__ {.title = str2(NULL, str("ctrl+"), hk->title),
-                        .esc_seq = str2(NULL, str("\x1b\x5b\x31\x3b\x35"), suff),
-                        .key = hk->key,
-                        .ctl = true}));
-            ·_(k, (·__ {.title = str2(NULL, str("alt+"), hk->title),
-                        .esc_seq = str2(NULL, str("\x1b\x5b\x31\x3b\x33"), suff),
-                        .key = hk->key,
-                        .alt = true}));
-            ·_(k, (·__ {.title = str2(NULL, str("shift+"), hk->title),
-                        .esc_seq = str2(NULL, str("\x1b\x5b\x31\x3b\x32"), suff),
-                        .key = hk->key,
-                        .shift = true}));
-            ·_(k, (·__ {.title = str2(NULL, str("ctrl+shift+"), hk->title),
-                        .esc_seq = str2(NULL, str("\x1b\x5b\x31\x3b\x36"), suff),
-                        .key = hk->key,
-                        .ctl = true,
-                        .shift = true}));
-            ·_(k, (·__ {.title = str2(NULL, str("alt+shift+"), hk->title),
-                        .esc_seq = str2(NULL, str("\x1b\x5b\x31\x3b\x34"), suff),
-                        .key = hk->key,
-                        .alt = true,
-                        .shift = true}));
+        if (hk->alt || hk->ctl || hk->shift)
+            continue;
+        UInt const key = hk->key;
+        Bool const is_foo =
+            (ode_key_f1 == key || ode_key_f2 == key || ode_key_f3 == key || ode_key_f4 == key || ode_key_end == key || ode_key_home == key
+             || ode_key_arr_d == key || ode_key_arr_l == key || ode_key_arr_r == key || ode_key_arr_u == key);
+        Bool const is_baz = (ode_key_pgup == key || ode_key_pgdn == key || ode_key_del == key || ode_key_ins == key);
+        Bool const is_bar = (is_baz || ode_key_f5 == key || ode_key_f6 == key || ode_key_f7 == key || ode_key_f8 == key || ode_key_f9 == key
+                             || ode_key_f10 == key || ode_key_f11 == key || ode_key_f12 == key);
+        if (is_foo || is_bar) {
+            Str const pref = is_foo ? str("\x1b\x5b\x31\x3b") : str2(NULL, strSub(hk->esc_seq, 0, is_baz ? 3 : 4), str("\x3b"));
+            Str const suff = is_foo ? strSub(hk->esc_seq, hk->esc_seq.len - 1, hk->esc_seq.len) : str("\x7e");
+            for (UInt i = 0; i <= 6; i += 1)
+                ·_(k, (·__ {.title = str2(NULL, str(titles[i]), hk->title),
+                            .esc_seq = str3(NULL, pref, str(fkey_infixes[i]), suff),
+                            .key = key,
+                            .alt = (i == 1 || i == 2 || i == 5 || i == 6),
+                            .ctl = (i == 3 || i == 4 || i == 5 || i == 6),
+                            .shift = (i == 0 || i == 2 || i == 4 || i == 6)}));
         }
     });
-    // ·_(k, (·__ {.title = str("f2"), .key = ode_key_f2, .esc_seq = str("\x1b\x4f\x51")}));
-    // ·_(k, (·__ {.title = str("f3"), .key = ode_key_f3, .esc_seq = str("\x1b\x4f\x52")}));
-    // ·_(k, (·__ {.title = str("f4"), .key = ode_key_f4, .esc_seq = str("\x1b\x4f\x53")}));
-    // ·_(k, (·__ {.title = str("f5"), .key = ode_key_f5, .esc_seq = str("\x1b\x5b\x31\x35\x7e")}));
-    // ·_(k, (·__ {.title = str("f6"), .key = ode_key_f6, .esc_seq = str("\x1b\x5b\x31\x37\x7e")}));
-    // ·_(k, (·__ {.title = str("f7"), .key = ode_key_f7, .esc_seq = str("\x1b\x5b\x31\x38\x7e")}));
-    // ·_(k, (·__ {.title = str("f8"), .key = ode_key_f8, .esc_seq = str("\x1b\x5b\x31\x39\x7e")}));
-    // ·_(k, (·__ {.title = str("f9"), .key = ode_key_f9, .esc_seq = str("\x1b\x5b\x32\x30\x7e")}));
-    // ·_(k, (·__ {.title = str("f10"), .key = ode_key_f10, .esc_seq = str("\x1b\x5b\x32\x31\x7e")}));
-    // ·_(k, (·__ {.title = str("f11"), .key = ode_key_f11, .esc_seq = str("\x1b\x5b\x32\x33\x7e")}));
-    // ·_(k, (·__ {.title = str("f12"), .key = ode_key_f12, .esc_seq = str("\x1b\x5b\x32\x34\x7e")}));
-    // ·_(k, (·__ {.title = str("enter"), .key = ode_key_enter, .esc_seq = str("\x0d")}));
-    // ·_(k, (·__ {.title = str("backspace"), .key = ode_key_back, .esc_seq = str("\x7f")}));
-    // ·_(k, (·__ {.title = str("left"), .key = ode_key_arr_l, .esc_seq = str("\x1b\x5b\x44")}));
-    // ·_(k, (·__ {.title = str("down"), .key = ode_key_arr_d, .esc_seq = str("\x1b\x5b\x42")}));
-    // ·_(k, (·__ {.title = str("up"), .key = ode_key_arr_u, .esc_seq = str("\x1b\x5b\x41")}));
-    // ·_(k, (·__ {.title = str("right"), .key = ode_key_arr_r, .esc_seq = str("\x1b\x5b\x43")}));
-    // ·_(k, (·__ {.title = str("end"), .key = ode_key_end, .esc_seq = str("\x1b\x5b\x46")}));
-    // ·_(k, (·__ {.title = str("home"), .key = ode_key_home, .esc_seq = str("\x1b\x5b\x48")}));
-    // ·_(k, (·__ {.title = str("insert"), .key = ode_key_ins, .esc_seq = str("\x1b\x5b\x32\x7e")}));
-    // ·_(k, (·__ {.title = str("delete"), .key = ode_key_del, .esc_seq = str("\x1b\x5b\x33\x7e")}));
-    // ·_(k, (·__ {.title = str("pageup"), .key = ode_key_pgup, .esc_seq = str("\x1b\x5b\x35\x7e")}));
-    // ·_(k, (·__ {.title = str("pagedown"), .key = ode_key_pgdn, .esc_seq = str("\x1b\x5b\x36\x7e")}));
+    ·_(k, (·__ {.title = str("alt+enter"), .alt = true, .key = ode_key_enter, .esc_seq = str("\x1b\x0d")}));
+    ·_(k, (·__ {.title = str("alt+backspace"), .alt = true, .key = ode_key_back, .esc_seq = str("\x1b\x7f")}));
+    ·_(k, (·__ {.title = str("ctrl+backspace"), .ctl = true, .key = ode_key_back, .esc_seq = str("\x08")}));
+    ·_(k, (·__ {.title = str("ctrl+alt+backspace"), .ctl = true, .alt = true, .key = ode_key_back, .esc_seq = str("\x1b\x08")}));
+    static CStr a_to_z = "abcdefghijklmnopqrstuvwxyz~_@|\\(){}[]^-*+#'.:,;<>!\"$&/=?`0123456789\x25";
+    Str ascii_ctl_escs = newStr(NULL, str(a_to_z).len, 0);
+    for (UInt i = 0; a_to_z[i] != 0; i += 1) {
+        U8 const c = a_to_z[i];
+        ascii_ctl_escs.at[i] = (c & 0x1f);
+        Str const st = (Str) {.at = (U8*)&c, .len = 1};
+        Str const se = (Str) {.at = &ascii_ctl_escs.at[i], .len = 1};
+        ·_(k, (·__ {.title = str2(NULL, str("alt+"), st), .alt = true, .key = c, .esc_seq = str2(NULL, str("\x1b"), st)}));
+        if (i <= 30 && c != 'i') {
+            ·_(k, (·__ {.title = str2(NULL, str("ctrl+"), st), .ctl = true, .key = c, .esc_seq = se}));
+            ·_(k,
+               (·__ {.title = str2(NULL, str("ctrl+alt+"), st), .ctl = true, .alt = true, .key = c, .esc_seq = str2(NULL, str("\x1b"), se)}));
+        }
+    }
 
+    // { // now reorder such that all \x1b-prefixed hotkeys follow all non-\x1b ones. this will later short-cut the search on each keypress
+    //     for (UInt i = 0; i < k.len; i += 1)
+    //         if (k.at[i].esc_seq.at[0] == '\x1b') {
+    //             ode.input.hotkeys_idx_1b = i;
+    //             break;
+    //         }
+    //     odeDie(strZ(uIntToStr(NULL, ode.input.hotkeys_idx_1b, 1, 10)), false);
+    // }
 
     ode.input.all.hotkeys = k;
 }
@@ -205,8 +205,6 @@ Bool odeProcessInput() {
             } else {
                 OdeHotKey* hotkey = NULL;
                 ·forEach(OdeHotKey, hk, ode.input.all.hotkeys, {
-                    if ((buf[i] != '\x1b') && iˇhk > 1)
-                        break;
                     if (·isEsc(hk->esc_seq.at, hk->esc_seq.len, hk->esc_seq.len)) {
                         hotkey = hk;
                         break;
@@ -216,10 +214,10 @@ Bool odeProcessInput() {
                     ·push(inputs, ((OdeInput) {.kind = ode_input_hotkey,
                                                .of = {.key = hotkey->key},
                                                .mod_key = {.ctl = hotkey->ctl, .alt = hotkey->alt, .shift = hotkey->shift}}));
-                    // i += (hotkey->esc_seq.len - 1);
-                } else if (buf[i] == (0x1f & 'q'))
-                    ode.input.exit_requested = true;
-                else
+                    i += (hotkey->esc_seq.len - 1);
+                    if (hotkey->ctl && hotkey->key == 'q' && !(hotkey->alt || hotkey->shift))
+                        ode.input.exit_requested = true;
+                } else
                     ·push(inputs, ((OdeInput) {.kind = ode_input_str, .of = {.string = (Str) {.at = &buf[i], .len = 1}}}));
             }
         }

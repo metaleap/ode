@@ -183,6 +183,7 @@ struct Ode {
             OdeCmds commands;
             OdeHotKeys hotkeys;
         } all;
+        UInt hotkeys_idx_1b;
         Bool exit_requested;
         Bool screen_resized;
     } input;
