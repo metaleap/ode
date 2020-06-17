@@ -43,8 +43,14 @@ struct OdeUiCtl {
 };
 
 
-OdeUiCtl odeUiCtl(MemHeap* mem_heap, Str const text, OdeUiCtlDocking const dock, OdeRect rect) {
-    OdeUiCtl ret_ctl = (OdeUiCtl) {.dirty = true, .visible = true, .text = text, .dock = dock, .rect = rect, .mem = mem_heap};
+OdeUiCtl odeUiCtl(MemHeap* mem_heap, Str const text, OdeUiCtlDocking const dock,
+                  OdeRect rect) {
+    OdeUiCtl ret_ctl = (OdeUiCtl) {.dirty = true,
+                                   .visible = true,
+                                   .text = text,
+                                   .dock = dock,
+                                   .rect = rect,
+                                   .mem = mem_heap};
     return ret_ctl;
 }
 
@@ -72,9 +78,15 @@ OdeColored odeUiCtlEffectiveColors(OdeUiCtl const* ctl) {
     while ((ret_col.bg == NULL) || (ret_col.fg == NULL) || (ret_col.ul3 == NULL)) {
         ctl = ctl->parent;
         OdeRgbaColor* rgba(U8 const r, U8 const g, U8 const b, U8 const a);
-        ret_col.bg = (ret_col.bg != NULL) ? ret_col.bg : (ctl != NULL) ? ctl->color.bg : rgba(0, 0, 0, 0);
-        ret_col.fg = (ret_col.fg != NULL) ? ret_col.fg : (ctl != NULL) ? ctl->color.fg : rgba(0, 0, 0, 0);
-        ret_col.ul3 = (ret_col.ul3 != NULL) ? ret_col.ul3 : (ctl != NULL) ? ctl->color.ul3 : rgba(0, 0, 0, 0);
+        ret_col.bg = (ret_col.bg != NULL)
+                         ? ret_col.bg
+                         : (ctl != NULL) ? ctl->color.bg : rgba(0, 0, 0, 0);
+        ret_col.fg = (ret_col.fg != NULL)
+                         ? ret_col.fg
+                         : (ctl != NULL) ? ctl->color.fg : rgba(0, 0, 0, 0);
+        ret_col.ul3 = (ret_col.ul3 != NULL)
+                          ? ret_col.ul3
+                          : (ctl != NULL) ? ctl->color.ul3 : rgba(0, 0, 0, 0);
     }
     return ret_col;
 }

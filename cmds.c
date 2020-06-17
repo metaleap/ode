@@ -4,16 +4,18 @@
 #include "common.c"
 
 
-PtrAny cmd·workbench·action·quit(OdeCmd const* const cmd, PtrAny const args_ptr, UInt const args_len) {
+static PtrAny workbench·action·quit(OdeCmd const* const cmd, PtrAny const args_ptr,
+                                    UInt const args_len) {
     ode.input.exit_requested = true;
     return NULL;
 }
 
 
 void odeInitCommands() {
-    ·append(ode.input.all.commands, ((OdeCmd) {.id = str("workbench.action.quit"),
-                                               .text = str("Exit"),
-                                               .hotkey = odeHotKey('q', true, false, false),
-                                               .menu_mnemonic = 'x',
-                                               .handler = cmd·workbench·action·quit}));
+    ·append(ode.input.all.commands,
+            ((OdeCmd) {.id = str("workbench.action.quit"),
+                       .text = str("Exit"),
+                       .hotkey = odeHotKey('q', true, false, false),
+                       .menu_mnemonic = 'x',
+                       .handler = workbench·action·quit}));
 }

@@ -19,7 +19,8 @@ static Bool onInputMain(OdeUiCtl* ctl_panel_main, MemHeap* mem_tmp, OdeInputs in
     for (UInt i = 0; i < inputs.len; i += 1)
         if (inputs.at[i].kind == ode_input_hotkey) {
             OdeHotKey* const hotkey =
-                odeHotKey(inputs.at[i].of.key, inputs.at[i].mod_key.ctl, inputs.at[i].mod_key.alt, inputs.at[i].mod_key.shift);
+                odeHotKey(inputs.at[i].of.key, inputs.at[i].mod_key.ctl,
+                          inputs.at[i].mod_key.alt, inputs.at[i].mod_key.shift);
             if (hotkey != NULL)
                 ·forEach(OdeCmd, cmd, ode.input.all.commands, {
                     if (cmd->hotkey == hotkey) {
@@ -35,7 +36,8 @@ static Bool onInputMain(OdeUiCtl* ctl_panel_main, MemHeap* mem_tmp, OdeInputs in
 
     return (inputs.len > 0 && // usually not needed, but this is the root panel:
             odeUiCtlPanelOnInput(ctl_panel_main, mem_tmp, inputs))
-           | ctl_panel_main->dirty; // any input-processing commands or controls could have caused this
+           | ctl_panel_main->dirty; // any input-processing commands or controls could
+                                    // have caused this
 }
 
 void odeUiMainOnResized(OdeSize const* const old, OdeSize const* const new) {
@@ -43,8 +45,10 @@ void odeUiMainOnResized(OdeSize const* const old, OdeSize const* const new) {
 }
 
 void odeUiInitMain() {
-    OdeUiMain main = (OdeUiMain) {.ui_panel = odeUiCtlPanel(odeUiCtl(NULL, str("ode"), ode_uictl_dock_fill, rect(0, 0, 0, 0)),
-                                                            ode_orient_none, ode_uictl_panel_none, 5)};
+    OdeUiMain main = (OdeUiMain) {
+        .ui_panel = odeUiCtlPanel(
+            odeUiCtl(NULL, str("ode"), ode_uictl_dock_fill, rect(0, 0, 0, 0)),
+            ode_orient_none, ode_uictl_panel_none, 5)};
     main.ui_panel.base.color.bg = rgba(0x18, 0x14, 0x18, 0xff);
     main.ui_panel.base.color.fg = rgba(0xaf, 0xa9, 0xa8, 0xff);
     main.ui_panel.base.on.input = onInputMain;

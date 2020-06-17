@@ -193,10 +193,13 @@ struct Ode {
     } input;
     struct Output {
         struct Screen {
-            OdeScreenCell real[ode_output_screen_max_width][ode_output_screen_max_height];
-            OdeScreenCell prep[ode_output_screen_max_width][ode_output_screen_max_height];
+            OdeScreenCell real[ode_output_screen_max_width]
+                              [ode_output_screen_max_height];
+            OdeScreenCell prep[ode_output_screen_max_width]
+                              [ode_output_screen_max_height];
             OdeSize size;
-            Str term_esc_cursor_pos[ode_output_screen_max_width][ode_output_screen_max_height];
+            Str term_esc_cursor_pos[ode_output_screen_max_width]
+                                   [ode_output_screen_max_height];
         } screen;
         OdeRgbaColors colors;
     } output;
@@ -245,7 +248,8 @@ OdeRgbaColor* rgba(U8 const r, U8 const g, U8 const b, U8 const a) {
         if (color->rgba == spec.rgba)
             return &ode.output.colors.at[i];
     }
-    spec.ansi_esc = str7(NULL, strL(";2;", 3), uIntToStr(NULL, r, 1, 10), strL(";", 1), uIntToStr(NULL, g, 1, 10), strL(";", 1),
+    spec.ansi_esc = str7(NULL, strL(";2;", 3), uIntToStr(NULL, r, 1, 10), strL(";", 1),
+                         uIntToStr(NULL, g, 1, 10), strL(";", 1),
                          uIntToStr(NULL, b, 1, 10), strL("m", 1));
     ·append(ode.output.colors, spec);
     return ·last(ode.output.colors);
@@ -283,7 +287,8 @@ OdeCmd* odeCmd(Str const cmd_id, OdeCmdHandler const cmd_handler) {
     return ·last(ode.input.all.commands);
 }
 
-OdeHotKey* odeHotKey(OdeKey const key, Bool const ctl, Bool const alt, Bool const shift) {
+OdeHotKey* odeHotKey(OdeKey const key, Bool const ctl, Bool const alt,
+                     Bool const shift) {
     ·forEach(OdeHotKey, hk, ode.input.all.hotkeys, {
         if (hk->key == key && hk->ctl == ctl && hk->alt == alt && hk->shift == shift)
             return hk;
@@ -292,6 +297,7 @@ OdeHotKey* odeHotKey(OdeKey const key, Bool const ctl, Bool const alt, Bool cons
 }
 
 void odeScreenClearRectText(OdeRect const* const rect);
-void odeRenderText(Str const text, OdeRect const* const screen_rect, Bool const clear_full_line);
+void odeRenderText(Str const text, OdeRect const* const screen_rect,
+                   Bool const clear_full_line);
 struct OdeUiCtl;
 OdeRect odeRender(struct OdeUiCtl* const ctl, OdeRect const screen_rect);

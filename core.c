@@ -28,11 +28,16 @@ static void termClearAndPosTopLeft() {
 static void termRestore() {
     if (ode.init.term.did_tcsetattr) {
         tcsetattr(ode.init.term.tty_fileno, TCSAFLUSH, &ode.init.term.orig_attrs);
-        write(ode.init.term.tty_fileno, term_esc "?1003l", 2 + 6); // request to no longer report mouse events
-        write(ode.init.term.tty_fileno, term_esc "?2004l", 2 + 6); // disable bracketed-paste mode
-        write(ode.init.term.tty_fileno, term_esc "?47l", 2 + 4);   // leave alt screen (entered in termInit)
-        write(ode.init.term.tty_fileno, term_esc "?25h", 2 + 4);   // show cursor (hidden in termInit)
-        write(ode.init.term.tty_fileno, term_esc "u", 2 + 1);      // restore cursor pos (stored in termInit)
+        write(ode.init.term.tty_fileno, term_esc "?1003l",
+              2 + 6); // request to no longer report mouse events
+        write(ode.init.term.tty_fileno, term_esc "?2004l",
+              2 + 6); // disable bracketed-paste mode
+        write(ode.init.term.tty_fileno, term_esc "?47l",
+              2 + 4); // leave alt screen (entered in termInit)
+        write(ode.init.term.tty_fileno, term_esc "?25h",
+              2 + 4); // show cursor (hidden in termInit)
+        write(ode.init.term.tty_fileno, term_esc "u",
+              2 + 1); // restore cursor pos (stored in termInit)
     }
 }
 
@@ -51,10 +56,15 @@ void odeDie(CStr const hint, Bool const got_errno) {
 
 static void updateScreenSize() {
     struct winsize win_size = {.ws_row = 0, .ws_col = 0};
-    if ((-1 == ioctl(1, TIOCGWINSZ, &win_size)) || (win_size.ws_row == 0) || (win_size.ws_col == 0))
+    if ((-1 == ioctl(1, TIOCGWINSZ, &win_size)) || (win_size.ws_row == 0)
+        || (win_size.ws_col == 0))
         odeDie("updateScreenSize: ioctl", true);
-    ode.output.screen.size.width = (win_size.ws_col >= ode_output_screen_max_width) ? (ode_output_screen_max_width - 1) : win_size.ws_col;
-    ode.output.screen.size.height = (win_size.ws_row >= ode_output_screen_max_height) ? (ode_output_screen_max_height - 1) : win_size.ws_row;
+    ode.output.screen.size.width = (win_size.ws_col >= ode_output_screen_max_width)
+                                       ? (ode_output_screen_max_width - 1)
+                                       : win_size.ws_col;
+    ode.output.screen.size.height = (win_size.ws_row >= ode_output_screen_max_height)
+                                        ? (ode_output_screen_max_height - 1)
+                                        : win_size.ws_row;
 }
 
 static void termOnResized() {
@@ -67,19 +77,22 @@ static void termRawOn() {
         odeDie("termRawOn: tcgetattr", true);
 
     Termios new_attrs = ode.init.term.orig_attrs;
-    new_attrs.c_iflag &= ~(BRKINT     // disable break-condition-to-signal-raising (Ctl+C)
-                           | ICRNL    // disable CR-LF so that Enter/Return key sends \n not \r\n
-                           | INPCK    // disable parity-checking (not applicable to software terminals)
-                           | ISTRIP   // disable 8th-bit stripping
-                           | IXON);   // disable processing of Ctl+S and Ctl+Q so we receive them
-    new_attrs.c_oflag &= ~OPOST;      // disable automatic \n-to-\r\n output post-processing
-    new_attrs.c_cflag |= CS8;         // set char-size = 8 bits
-    new_attrs.c_lflag &= ~(ECHO       // disable automagic echoing of inputs
-                           | ICANON   // disable canonical mode (input sent line-by-line instead of byte-by-byte)
-                           | ISIG     // disable processing of Ctl+C and Ctl+Z so we receive them
-                           | IEXTEN); // disable processing of Ctl+V so we receive it
-    new_attrs.c_cc[VMIN] = 0;         // read() returns as soon as any amount of input bytes
-    new_attrs.c_cc[VTIME] = 1;        // read() times out after 1/10 sec
+    new_attrs.c_iflag &=
+        ~(BRKINT   // disable break-condition-to-signal-raising (Ctl+C)
+          | ICRNL  // disable CR-LF so that Enter/Return key sends \n not \r\n
+          | INPCK  // disable parity-checking (not applicable to software terminals)
+          | ISTRIP // disable 8th-bit stripping
+          | IXON); // disable processing of Ctl+S and Ctl+Q so we receive them
+    new_attrs.c_oflag &= ~OPOST; // disable automatic \n-to-\r\n output post-processing
+    new_attrs.c_cflag |= CS8;    // set char-size = 8 bits
+    new_attrs.c_lflag &=
+        ~(ECHO       // disable automagic echoing of inputs
+          | ICANON   // disable canonical mode (input sent line-by-line instead of
+                     // byte-by-byte)
+          | ISIG     // disable processing of Ctl+C and Ctl+Z so we receive them
+          | IEXTEN); // disable processing of Ctl+V so we receive it
+    new_attrs.c_cc[VMIN] = 0;  // read() returns as soon as any amount of input bytes
+    new_attrs.c_cc[VTIME] = 1; // read() times out after 1/10 sec
 
     if (-1 == tcsetattr(ode.init.term.tty_fileno, TCSAFLUSH, &new_attrs))
         odeDie("termRawOn: tcsetattr", true);
@@ -90,11 +103,16 @@ static void termInit() {
     termRawOn();
     ode.init.term.did_tcsetattr = true;
 
-    write(ode.init.term.tty_fileno, term_esc "s", 2 + 1);      // store cursor pos (restored in termRestore)
-    write(ode.init.term.tty_fileno, term_esc "?25l", 2 + 4);   // hide cursor (recovered in termRestore)
-    write(ode.init.term.tty_fileno, term_esc "?47h", 2 + 4);   // enter alt screen (left in termRestore)
-    write(ode.init.term.tty_fileno, term_esc "?2004h", 2 + 6); // enable bracketed-paste mode
-    write(ode.init.term.tty_fileno, term_esc "?1003h", 2 + 6); // request terminal to report mouse events
+    write(ode.init.term.tty_fileno, term_esc "s",
+          2 + 1); // store cursor pos (restored in termRestore)
+    write(ode.init.term.tty_fileno, term_esc "?25l",
+          2 + 4); // hide cursor (recovered in termRestore)
+    write(ode.init.term.tty_fileno, term_esc "?47h",
+          2 + 4); // enter alt screen (left in termRestore)
+    write(ode.init.term.tty_fileno, term_esc "?2004h",
+          2 + 6); // enable bracketed-paste mode
+    write(ode.init.term.tty_fileno, term_esc "?1003h",
+          2 + 6); // request terminal to report mouse events
     termClearAndPosTopLeft();
 }
 
@@ -114,11 +132,14 @@ void odeInit() {
             ºUInt idx_eq = strIndexOf(env_pair, strL("=", 1));
             if (idx_eq.got) {
                 ·push(ode.init.env.names, strSub(env_pair, 0, idx_eq.it));
-                ·push(ode.init.env.values, strSub(env_pair, 1 + idx_eq.it, env_pair.len));
+                ·push(ode.init.env.values,
+                      strSub(env_pair, 1 + idx_eq.it, env_pair.len));
             }
         }
         ode.init.fs.home_dir_path = odeEnv(str("HOME"));
-        while (ode.init.fs.home_dir_path.len > 0 && '/' == ode.init.fs.home_dir_path.at[ode.init.fs.home_dir_path.len - 1])
+        while (
+            ode.init.fs.home_dir_path.len > 0
+            && '/' == ode.init.fs.home_dir_path.at[ode.init.fs.home_dir_path.len - 1])
             ode.init.fs.home_dir_path.len -= 1;
     }
     ode.init.term.tty_fileno = open("/dev/tty", O_RDWR | O_NOCTTY);
@@ -138,7 +159,8 @@ void odeInit() {
     for (UInt x = 0; x < ode_output_screen_max_width; x += 1)
         for (UInt y = 0; y < ode_output_screen_max_height; y += 1)
             ode.output.screen.term_esc_cursor_pos[x][y] =
-                str5(NULL, esc, uIntToStr(NULL, 1 + y, 1, 10), strL(";", 1), uIntToStr(NULL, 1 + x, 1, 10), strL("H", 1));
+                str5(NULL, esc, uIntToStr(NULL, 1 + y, 1, 10), strL(";", 1),
+                     uIntToStr(NULL, 1 + x, 1, 10), strL("H", 1));
     updateScreenSize();
     if (signal(SIGWINCH, termOnResized) == SIG_ERR)
         odeDie("odeInit: signal", true);
