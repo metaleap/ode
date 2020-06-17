@@ -33,14 +33,6 @@ typedef enum OdeOrientation {
     ode_orient_vert,
 } OdeOrientation;
 
-struct OdeCmd;
-typedef PtrAny (*OdeCmdHandler)(struct OdeCmd const* const, PtrAny const, UInt const);
-typedef struct OdeCmd {
-    Str id;
-    OdeCmdHandler handler;
-} OdeCmd;
-typedef ·ListOf(OdeCmd) OdeCmds;
-
 typedef struct OdeSize {
     U8 width;
     U8 height;
@@ -152,6 +144,17 @@ typedef struct OdeMouseState {
     } btn_down;
     Bool dragging : 1;
 } OdeMouseState;
+
+struct OdeCmd;
+typedef PtrAny (*OdeCmdHandler)(struct OdeCmd const* const, PtrAny const, UInt const);
+typedef struct OdeCmd {
+    Str id;
+    Str text;
+    U8 menu_mnemonic;
+    OdeHotKey* hotkey;
+    OdeCmdHandler handler;
+} OdeCmd;
+typedef ·ListOf(OdeCmd) OdeCmds;
 
 typedef struct termios Termios;
 

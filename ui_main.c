@@ -1,5 +1,6 @@
 #pragma once
 #include "utils_std_mem.c"
+#include "cmds.c"
 #include "common.c"
 #include "core.c"
 #include "ui_ctl.c"
@@ -12,28 +13,29 @@ typedef struct OdeUiMain {
     OdeUiCtlPanel ui_panel;
 } OdeUiMain;
 
-static Bool onInputMain(OdeUiCtl* ctl_panel_main, MemHeap* mem_tmp, OdeInputs const inputs) {
-    Bool ret_dirty = false;
-    // if (bytes.len == 1)
-    //     switch (bytes.at[0]) {
-    //         case 'b' & 0x1f: {
-    //             ode.ui.sidebar_bottom->ui_panel.base.visible = !ode.ui.sidebar_bottom->ui_panel.base.visible;
-    //             ret_dirty = true;
-    //         } break;
-    //         case 'l' & 0x1f: {
-    //             ode.ui.sidebar_left->ui_panel.base.visible = !ode.ui.sidebar_left->ui_panel.base.visible;
-    //             ret_dirty = true;
-    //         } break;
-    //         case 'r' & 0x1f: {
-    //             ode.ui.sidebar_right->ui_panel.base.visible = !ode.ui.sidebar_right->ui_panel.base.visible;
-    //             ret_dirty = true;
-    //         } break;
-    //     }
-    if (ret_dirty)
-        odeUiCtlSetDirty(ctl_panel_main, true, true);
-    ret_dirty = odeUiCtlPanelOnInput(ctl_panel_main, mem_tmp, inputs) // usually not needed, but this is the root panel
-                | ret_dirty;
-    return ret_dirty;
+static Bool onInputMain(OdeUiCtl* ctl_panel_main, MemHeap* mem_tmp, OdeInputs inputs) {
+    // first: scan inputs for hotkeys bound to commands, invoke those commands and
+    // remove the hotkeys from inputs before passing the latter on to child controls
+    for (UInt i = 0; i < inputs.len; i += 1)
+        if (inputs.at[i].kind == ode_input_hotkey) {
+            OdeHotKey* const hotkey =
+                odeHotKey(inputs.at[i].of.key, inputs.at[i].mod_key.ctl, inputs.at[i].mod_key.alt, inputs.at[i].mod_key.shift);
+            if (hotkey != NULL)
+                ·forEach(OdeCmd, cmd, ode.input.all.commands, {
+                    if (cmd->hotkey == hotkey) {
+                        cmd->handler(cmd, NULL, 0);
+                        for (UInt j = i + 1; j < inputs.len; j += 1)
+                            inputs.at[j - 1] = inputs.at[i];
+                        inputs.len -= 1;
+                        i -= 1;
+                        break;
+                    }
+                });
+        }
+
+    return (inputs.len > 0 && // usually not needed, but this is the root panel:
+            odeUiCtlPanelOnInput(ctl_panel_main, mem_tmp, inputs))
+           | ctl_panel_main->dirty; // any input-processing commands or controls could have caused this
 }
 
 void odeUiMainOnResized(OdeSize const* const old, OdeSize const* const new) {

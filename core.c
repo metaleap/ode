@@ -8,8 +8,8 @@
 #include <unistd.h>
 
 #include "utils_std_basics.c"
-#include "common.c"
 #include "utils_std_mem.c"
+#include "common.c"
 
 
 static void termClearScreen() {
@@ -130,6 +130,8 @@ void odeInit() {
     ode.input.all.hotkeys = ·listOf(OdeHotKey, NULL, 0, 320);
     void odeInitKnownHotKeys();
     odeInitKnownHotKeys();
+    void odeInitCommands();
+    odeInitCommands();
 
     ode.output.colors = ·listOf(OdeRgbaColor, NULL, 0, 16);
     Str const esc = str(term_esc);

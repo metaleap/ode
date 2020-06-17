@@ -230,8 +230,6 @@ Bool odeProcessInput() {
                                                .of = {.key = hotkey->key},
                                                .mod_key = {.ctl = hotkey->ctl, .alt = hotkey->alt, .shift = hotkey->shift}}));
                     i += (hotkey->esc_seq.len - 1);
-                    if (hotkey->ctl && hotkey->key == 'q' && !(hotkey->alt || hotkey->shift))
-                        ode.input.exit_requested = true;
                 } else
                     ·push(inputs, ((OdeInput) {.kind = ode_input_str, .of = {.string = (Str) {.at = &buf[i], .len = 1}}}));
             }
