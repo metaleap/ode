@@ -1,4 +1,5 @@
 #pragma once
+#include "utils_std_mem.c"
 #include "common.c"
 #include "core.c"
 #include "ui_ctl.c"
@@ -8,14 +9,11 @@ typedef struct OdeUiViewExplorer {
     OdeUiCtlPanel ui_panel;
 } OdeUiViewExplorer;
 
-PtrAny odeUiViewExplorerFocus(struct OdeCmd const* const cmd, PtrAny const args, UInt const args_len) {
-    return NULL;
+OdeUiViewExplorer odeUiViewExplorer(MemHeap* mem) {
+    OdeUiViewExplorer ret_view = (OdeUiViewExplorer) {
+        .ui_panel = odeUiCtlPanel(
+            odeUiCtl(mem, str("Explorer"), ode_uictl_dock_fill, rect(0, 0, 0, 0)),
+            ode_orient_none, ode_uictl_panel_none, 0)};
+    ret_view.ui_panel.base.color.bg = rgba(77, 55, 33, 255);
+    return ret_view;
 }
-
-// void odeUiInitViewExplorer() {
-//     odeCmd(str("workbench.view.explorer"), odeUiViewExplorerFocus);
-
-//     ode.ui.view_explorer =
-//         odeUiCtlPanel(odeUiCtl(NULL, str("Explorer"), ode_uictl_dock_fill, rect(0, 0, 0, 0)), ode_orient_none, ode_uictl_panel_none, 0);
-//     ode.ui.view_explorer->base.color.bg = rgba(77, 55, 33, 255);
-// }

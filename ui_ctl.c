@@ -24,6 +24,7 @@ struct OdeUiCtl {
     MemHeap* mem;
     OdeUiCtls ctls;
     OdeUiCtl* parent;
+    OdeUiCtl* focus;
     Str text;
     OdeColored color;
     OdeRect rect;
@@ -33,7 +34,6 @@ struct OdeUiCtl {
         Bool dirty : 1;
         Bool disabled : 1;
         Bool visible : 1;
-        Bool focused : 1;
     };
     struct {
         OdeUiCtlRenderFunc render;
@@ -44,8 +44,7 @@ struct OdeUiCtl {
 
 
 OdeUiCtl odeUiCtl(MemHeap* mem_heap, Str const text, OdeUiCtlDocking const dock, OdeRect rect) {
-    OdeUiCtl ret_ctl = (OdeUiCtl) {
-        .dirty = true, .ctls = (OdeUiCtls) {.at = NULL}, .visible = true, .text = text, .dock = dock, .rect = rect, .mem = mem_heap};
+    OdeUiCtl ret_ctl = (OdeUiCtl) {.dirty = true, .visible = true, .text = text, .dock = dock, .rect = rect, .mem = mem_heap};
     return ret_ctl;
 }
 

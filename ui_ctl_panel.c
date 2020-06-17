@@ -63,5 +63,5 @@ OdeUiCtlPanel odeUiCtlPanel(OdeUiCtl base, OdeOrientation orientation, OdeUiCtlP
     base.on.render = odeUiCtlPanelOnRender;
     base.on.input = odeUiCtlPanelOnInput;
     base.ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, base.mem, 0, ctls_capacity);
-    return (OdeUiCtlPanel) {.base = base, .tab_bar = NULL, .ctl_idx = 0, .orient = orientation, .mode = mode};
+    return (OdeUiCtlPanel) {.base = base, .orient = orientation, .mode = mode};
 }
