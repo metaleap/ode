@@ -138,6 +138,7 @@ typedef struct OdeHotKey {
         Bool ctl : 1;
         Bool alt : 1;
         Bool shift : 1;
+        Bool reserved : 1;
     };
 } OdeHotKey;
 typedef ·ListOf(OdeHotKey) OdeHotKeys;

@@ -12,9 +12,9 @@ void odeInitKnownHotKeys() {
 #define ·_ ·append
 #define ·__ (OdeHotKey)
 
-    ·_(k, (·__ {.title = str("enter"), .key = ode_key_enter, .esc_seq = str("\x0d")}));
+    ·_(k, (·__ {.title = str("tab"), .reserved = true, .key = ode_key_tab, .esc_seq = str("\x09")}));
+    ·_(k, (·__ {.title = str("enter"), .reserved = true, .key = ode_key_enter, .esc_seq = str("\x0d")}));
     ·_(k, (·__ {.title = str("backspace"), .key = ode_key_back, .esc_seq = str("\x7f")}));
-
     ·_(k, (·__ {.title = str("f1"), .key = ode_key_f1, .esc_seq = str("\x1b\x4f\x50")}));
     ·_(k, (·__ {.title = str("f2"), .key = ode_key_f2, .esc_seq = str("\x1b\x4f\x51")}));
     ·_(k, (·__ {.title = str("f3"), .key = ode_key_f3, .esc_seq = str("\x1b\x4f\x52")}));
@@ -37,8 +37,16 @@ void odeInitKnownHotKeys() {
     ·_(k, (·__ {.title = str("delete"), .key = ode_key_del, .esc_seq = str("\x1b\x5b\x33\x7e")}));
     ·_(k, (·__ {.title = str("pageup"), .key = ode_key_pgup, .esc_seq = str("\x1b\x5b\x35\x7e")}));
     ·_(k, (·__ {.title = str("pagedown"), .key = ode_key_pgdn, .esc_seq = str("\x1b\x5b\x36\x7e")}));
-    ·_(k, (·__ {.title = str("alt+escape"), .key = ode_key_esc, .alt = true, .esc_seq = str("\x1b\x1b")}));
 
+    // some manually formulated hotkeys
+    ·_(k, (·__ {.title = str("alt+escape"), .key = ode_key_esc, .alt = true, .esc_seq = str("\x1b\x1b")}));
+    ·_(k, (·__ {.title = str("shift+tab"), .key = ode_key_tab, .shift = true, .reserved = true, .esc_seq = str("\x1b\x5b\x5a")}));
+    ·_(k, (·__ {.title = str("alt+enter"), .alt = true, .key = ode_key_enter, .esc_seq = str("\x1b\x0d")}));
+    ·_(k, (·__ {.title = str("alt+backspace"), .alt = true, .key = ode_key_back, .esc_seq = str("\x1b\x7f")}));
+    ·_(k, (·__ {.title = str("ctrl+backspace"), .ctl = true, .key = ode_key_back, .esc_seq = str("\x08")}));
+    ·_(k, (·__ {.title = str("ctrl+alt+backspace"), .ctl = true, .alt = true, .key = ode_key_back, .esc_seq = str("\x1b\x08")}));
+
+    // hotkey combinations for F-keys, arrow keys, pgup pgdn ins del home end
     static CStr titles[] = {"shift+", "alt+", "alt+shift+", "ctrl+", "ctrl+shift+", "ctrl+alt+", "ctrl+alt+shift+"};
     static CStr fkey_infixes[] = {"\x32", "\x33", "\x34", "\x35", "\x36", "\x37", "\x38"}; // order matches the above
     ·forEach(OdeHotKey, hk, k, {
@@ -63,11 +71,9 @@ void odeInitKnownHotKeys() {
                             .shift = (i == 0 || i == 2 || i == 4 || i == 6)}));
         }
     });
-    ·_(k, (·__ {.title = str("alt+enter"), .alt = true, .key = ode_key_enter, .esc_seq = str("\x1b\x0d")}));
-    ·_(k, (·__ {.title = str("alt+backspace"), .alt = true, .key = ode_key_back, .esc_seq = str("\x1b\x7f")}));
-    ·_(k, (·__ {.title = str("ctrl+backspace"), .ctl = true, .key = ode_key_back, .esc_seq = str("\x08")}));
-    ·_(k, (·__ {.title = str("ctrl+alt+backspace"), .ctl = true, .alt = true, .key = ode_key_back, .esc_seq = str("\x1b\x08")}));
-    static CStr a_to_z = "abcdefghijklmnopqrstuvwxyz~_@|\\(){}[]^-*+#'.:,;<>!\"$&/=?`0123456789\x25";
+
+    // ASCII hotkeys: all alt+ and some also ctrl+ and ctrl+alt+
+    static CStr a_to_z = "abcdefghijklmnopqrstuvwxyz~_@|\\(){}[]^-*+#'.:,;<>!\"$&/=?`0123456789\x25"; // dont reorder
     Str ascii_ctl_escs = newStr(NULL, str(a_to_z).len, 0);
     for (UInt i = 0; a_to_z[i] != 0; i += 1) {
         U8 const c = a_to_z[i];
@@ -75,7 +81,7 @@ void odeInitKnownHotKeys() {
         Str const st = (Str) {.at = (U8*)&c, .len = 1};
         Str const se = (Str) {.at = &ascii_ctl_escs.at[i], .len = 1};
         ·_(k, (·__ {.title = str2(NULL, str("alt+"), st), .alt = true, .key = c, .esc_seq = str2(NULL, str("\x1b"), st)}));
-        if (i <= 30 && c != 'i') {
+        if (i <= 30 && c != 'i' && c != 'h' && c != 'm') {
             ·_(k, (·__ {.title = str2(NULL, str("ctrl+"), st), .ctl = true, .key = c, .esc_seq = se}));
             ·_(k,
                (·__ {.title = str2(NULL, str("ctrl+alt+"), st), .ctl = true, .alt = true, .key = c, .esc_seq = str2(NULL, str("\x1b"), se)}));
@@ -212,7 +218,7 @@ Bool odeProcessInput() {
             } else {
                 OdeHotKey* hotkey = NULL;
                 ·forEach(OdeHotKey, hk, ode.input.all.hotkeys, {
-                    if (iˇhk >= ode.input.hotkeys_idx_esc && !is_esc)
+                    if (iˇhk == ode.input.hotkeys_idx_esc && !is_esc)
                         break;
                     if (·isEsc(hk->esc_seq.at, hk->esc_seq.len, hk->esc_seq.len)) {
                         hotkey = hk;
