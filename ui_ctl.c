@@ -30,6 +30,7 @@ struct OdeUiCtl {
     OdeRect rect;
     OdeGlyphStyleFlags style;
     OdeUiCtlDocking dock;
+    OdeUiViewKind view_kind;
     struct {
         Bool dirty : 1;
         Bool disabled : 1;
@@ -55,22 +56,22 @@ OdeUiCtl odeUiCtl(MemHeap* mem_heap, Str const text, OdeUiCtlDocking const dock,
 }
 
 void odeUiCtlDispose(OdeUiCtl* ctl) {
-    for (UInt i = 0; i < ctl->ctls.len; i += 1)
-        odeUiCtlDispose(ctl->ctls.at[i]);
     if (ctl->on.dispose != NULL)
         ctl->on.dispose(ctl);
+    for (UInt i = 0; i < ctl->ctls.len; i += 1)
+        odeUiCtlDispose(ctl->ctls.at[i]);
+    ctl->ctls.len = 0;
     if (ctl->mem != NULL && (ctl->parent == NULL || ctl->mem != ctl->parent->mem))
         memHeapFree(ctl->mem);
 }
 
-void odeUiCtlSetDirty(OdeUiCtl* ctl, Bool const dirty, Bool const propagate) {
+void odeUiCtlSetDirty(OdeUiCtl* ctl, Bool const dirty, Bool const propagate_down) {
     ctl->dirty = dirty;
-    if (propagate) {
+    if (propagate_down)
         for (UInt i = 0; i < ctl->ctls.len; i += 1)
             odeUiCtlSetDirty(ctl->ctls.at[i], dirty, true);
-        for (ctl = ctl->parent; ctl != NULL; ctl = ctl->parent)
-            odeUiCtlSetDirty(ctl, dirty, false);
-    }
+    for (ctl = ctl->parent; ctl != NULL; ctl = ctl->parent)
+        odeUiCtlSetDirty(ctl, dirty, false);
 }
 
 OdeColored odeUiCtlEffectiveColors(OdeUiCtl const* ctl) {

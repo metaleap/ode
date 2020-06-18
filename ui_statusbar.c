@@ -74,20 +74,18 @@ static Bool onInput(OdeUiCtl* ctl_panel_statusbar, MemHeap* mem_tmp,
             } break;
             case ode_input_hotkey: {
                 text = strPush(text, "HotKey:");
-                OdeHotKey* const found =
-                    odeHotKey(input.of.key, input.mod_key.ctl, input.mod_key.alt,
-                              input.mod_key.shift);
+                OdeHotKey* const found = odeHotKey(input.of.key, input.mod_key);
                 text = strPush(text,
                                (found == NULL) ? "Unknown" : ((CStr)found->title.at));
             } break;
             default: odeDie(strZ(uIntToStr(NULL, input.kind, 1, 10)), false);
         }
         text = strPush(text, "    ");
-        if (input.mod_key.ctl)
+        if (odeModKeyHas(input.mod_key, ode_key_mod_ctl))
             text = strPush(text, "Ctrl");
-        if (input.mod_key.shift)
+        if (odeModKeyHas(input.mod_key, ode_key_mod_shift))
             text = strPush(text, "Shift");
-        if (input.mod_key.alt)
+        if (odeModKeyHas(input.mod_key, ode_key_mod_alt))
             text = strPush(text, "Alt");
     }
     text.at[text.len] = 0;

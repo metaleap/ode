@@ -1,4 +1,5 @@
 #pragma once
+#include "utils_std_basics.c"
 #include "common.c"
 #include "core.c"
 #include "ui_ctl.c"
@@ -18,6 +19,15 @@ OdeUiSidebar odeUiSidebar(Str const text, UInt const size, OdeUiCtlDocking const
                      rect(0, 0, (dock == ode_uictl_dock_bottom) ? 0 : size,
                           (dock == ode_uictl_dock_bottom) ? size : 0)),
             orient, ode_uictl_panel_tabs, ctls_cap)};
+}
+
+OdeUiCtl* odeUiSidebarExistingViewOfKind(OdeUiSidebar* const sidebar,
+                                         OdeUiViewKind const kind) {
+    ·assert(kind != ode_uiview_none);
+    for (UInt i = 0; i < sidebar->ui_panel.base.ctls.len; i += 1)
+        if (sidebar->ui_panel.base.ctls.at[i]->view_kind == kind)
+            return sidebar->ui_panel.base.ctls.at[i];
+    return NULL;
 }
 
 static void initSidebarLeft(UInt const ctls_cap) {

@@ -42,6 +42,8 @@ static void termRestore() {
 }
 
 static void odeOnExit() {
+    void odeUiCtlDispose(OdeUiCtl * ctl);
+    odeUiCtlDispose((OdeUiCtl*)ode.ui.main);
     termRestore();
     if (ode.init.term.tty_fileno > 2)
         close(ode.init.term.tty_fileno);
@@ -147,7 +149,7 @@ void odeInit() {
         odeDie("odeInit: open(/dev/tty)", true);
 
     ode.input.mouse.pos = pos(255, 255);
-    ode.input.all.commands = ·listOf(OdeCmd, NULL, 0, 8);
+    ode.input.all.commands = ·listOf(OdeCmd, NULL, 0, 16);
     ode.input.all.hotkeys = ·listOf(OdeHotKey, NULL, 0, 320);
     void odeInitKnownHotKeys();
     odeInitKnownHotKeys();

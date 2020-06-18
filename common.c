@@ -9,7 +9,6 @@
 #define ode_output_screen_max_height 256
 #define term_esc "\x1b["
 
-
 typedef enum OdeInputKind {
     ode_input_str,
     ode_input_mouse,
@@ -32,6 +31,55 @@ typedef enum OdeOrientation {
     ode_orient_horiz,
     ode_orient_vert,
 } OdeOrientation;
+
+typedef enum OdeKeyMod {
+    ode_key_mod_none = 0,
+    ode_key_mod_ctl = 1,
+    ode_key_mod_alt = 2,
+    ode_key_mod_shift = 4,
+} OdeKeyMod;
+
+typedef enum OdeKeyKnown : UInt {
+    ode_key_none = 0,
+    ode_key_tab = 0x09,
+    ode_key_f1 = 0x1b4f50,
+    ode_key_f2 = 0x1b4f51,
+    ode_key_f3 = 0x1b4f52,
+    ode_key_f4 = 0x1b4f53,
+    ode_key_f5 = 0x1b5b31357e,
+    ode_key_f6 = 0x1b5b31377e,
+    ode_key_f7 = 0x1b5b31387e,
+    ode_key_f8 = 0x1b5b31397e,
+    ode_key_f9 = 0x1b5b32307e,
+    ode_key_f10 = 0x1b5b32317e,
+    ode_key_f11 = 0x1b5b32337e,
+    ode_key_f12 = 0x1b5b32347e,
+    ode_key_enter = 0x0d,
+    ode_key_esc = 0x1b,
+    ode_key_back = 0x7f,
+    ode_key_arr_l = 0x1b5b44,
+    ode_key_arr_d = 0x1b5b42,
+    ode_key_arr_u = 0x1b5b41,
+    ode_key_arr_r = 0x1b5b43,
+    ode_key_end = 0x1b5b46,
+    ode_key_home = 0x1b5b48,
+    ode_key_ins = 0x1b5b327e,
+    ode_key_del = 0x1b5b337e,
+    ode_key_pgup = 0x1b5b357e,
+    ode_key_pgdn = 0x1b5b367e,
+} OdeKeyKnown;
+
+typedef enum OdeUiViewKind {
+    ode_uiview_none,
+    ode_uiview_explorer,
+    ode_uiview_extensions,
+    ode_uiview_issues,
+    ode_uiview_notifications,
+    ode_uiview_outline,
+    ode_uiview_output,
+    ode_uiview_search,
+    ode_uiview_terminal,
+} OdeUiViewKind;
 
 typedef struct OdeSize {
     U8 width;
@@ -92,44 +140,12 @@ struct OdeUiViewDiags;
 struct OdeUiViewLogOutput;
 struct OdeUiViewTerminal;
 
-typedef enum OdeKey : UInt {
-    ode_key_none,
-    ode_key_tab = 0x09,
-    ode_key_f1 = 0x1b4f50,
-    ode_key_f2 = 0x1b4f51,
-    ode_key_f3 = 0x1b4f52,
-    ode_key_f4 = 0x1b4f53,
-    ode_key_f5 = 0x1b5b31357e,
-    ode_key_f6 = 0x1b5b31377e,
-    ode_key_f7 = 0x1b5b31387e,
-    ode_key_f8 = 0x1b5b31397e,
-    ode_key_f9 = 0x1b5b32307e,
-    ode_key_f10 = 0x1b5b32317e,
-    ode_key_f11 = 0x1b5b32337e,
-    ode_key_f12 = 0x1b5b32347e,
-    ode_key_enter = 0x0d,
-    ode_key_esc = 0x1b,
-    ode_key_back = 0x7f,
-    ode_key_arr_l = 0x1b5b44,
-    ode_key_arr_d = 0x1b5b42,
-    ode_key_arr_u = 0x1b5b41,
-    ode_key_arr_r = 0x1b5b43,
-    ode_key_end = 0x1b5b46,
-    ode_key_home = 0x1b5b48,
-    ode_key_ins = 0x1b5b327e,
-    ode_key_del = 0x1b5b337e,
-    ode_key_pgup = 0x1b5b357e,
-    ode_key_pgdn = 0x1b5b367e,
-} OdeKey;
-
 typedef struct OdeHotKey {
     Str title;
     Str esc_seq;
     struct {
-        OdeKey key;
-        Bool ctl : 1;
-        Bool alt : 1;
-        Bool shift : 1;
+        OdeKeyKnown key;
+        OdeKeyMod mod;
         Bool reserved : 1;
     };
 } OdeHotKey;
@@ -152,6 +168,7 @@ typedef struct OdeCmd {
     Str text;
     U8 menu_mnemonic;
     OdeHotKey* hotkey;
+    OdeHotKey* hotkey_chord;
     OdeCmdHandler handler;
 } OdeCmd;
 typedef ·ListOf(OdeCmd) OdeCmds;
@@ -226,14 +243,10 @@ typedef struct OdeInput {
             Bool did_move : 1;
             Bool did_click : 1;
         } mouse;
-        OdeKey key;
+        OdeKeyKnown key;
     } of;
     OdeInputKind kind;
-    struct {
-        Bool ctl : 1;
-        Bool alt : 1;
-        Bool shift : 1;
-    } mod_key;
+    OdeKeyMod mod_key;
 } OdeInput;
 typedef ·SliceOf(OdeInput) OdeInputs;
 
@@ -271,6 +284,13 @@ OdeRect rect(UInt const x, UInt const y, UInt const width, UInt const height) {
     return (OdeRect) {.pos = pos(x, y), .size = size(width, height)};
 }
 
+MemHeap* odeMem(UInt const page_size) {
+    MemHeap mem = (MemHeap) {.kind = mem_heap_pages_malloc, .cap = page_size};
+    MemHeap* ret_mem = ·new(MemHeap, &mem);
+    *ret_mem = mem;
+    return ret_mem;
+}
+
 Str odeEnv(Str const name) {
     for (UInt i = 0; i < ode.init.env.names.len; i += 1)
         if (strEql(name, ode.init.env.names.at[i]))
@@ -287,10 +307,19 @@ OdeCmd* odeCmd(Str const cmd_id, OdeCmdHandler const cmd_handler) {
     return ·last(ode.input.all.commands);
 }
 
-OdeHotKey* odeHotKey(OdeKey const key, Bool const ctl, Bool const alt,
-                     Bool const shift) {
+OdeKeyMod odeModKeyOf(Bool const ctl, Bool const alt, Bool const shift) {
+    return (shift ? ode_key_mod_shift : ode_key_mod_none)
+           | (ctl ? ode_key_mod_ctl : ode_key_mod_none)
+           | (alt ? ode_key_mod_alt : ode_key_mod_none);
+}
+
+Bool odeModKeyHas(OdeKeyMod const mod, OdeKeyMod const must) {
+    return (mod & must) == must;
+}
+
+OdeHotKey* odeHotKey(OdeKeyKnown const key, OdeKeyMod const mod) {
     ·forEach(OdeHotKey, hk, ode.input.all.hotkeys, {
-        if (hk->key == key && hk->ctl == ctl && hk->alt == alt && hk->shift == shift)
+        if (hk->key == key && hk->mod == mod)
             return hk;
     });
     return NULL;
@@ -300,4 +329,5 @@ void odeScreenClearRectText(OdeRect const* const rect);
 void odeRenderText(Str const text, OdeRect const* const screen_rect,
                    Bool const clear_full_line);
 struct OdeUiCtl;
-OdeRect odeRender(struct OdeUiCtl* const ctl, OdeRect const screen_rect);
+typedef struct OdeUiCtl OdeUiCtl;
+OdeRect odeRender(OdeUiCtl* const ctl, OdeRect const screen_rect);

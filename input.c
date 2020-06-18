@@ -87,28 +87,27 @@ void odeInitKnownHotKeys() {
     // some manually formulated hotkeys
     ·_(k, (·__ {.title = str("alt+escape"),
                 .key = ode_key_esc,
-                .alt = true,
+                .mod = ode_key_mod_alt,
                 .esc_seq = str("\x1b\x1b")}));
     ·_(k, (·__ {.title = str("shift+tab"),
                 .key = ode_key_tab,
-                .shift = true,
+                .mod = ode_key_mod_shift,
                 .reserved = true,
                 .esc_seq = str("\x1b\x5b\x5a")}));
     ·_(k, (·__ {.title = str("alt+enter"),
-                .alt = true,
+                .mod = ode_key_mod_alt,
                 .key = ode_key_enter,
                 .esc_seq = str("\x1b\x0d")}));
     ·_(k, (·__ {.title = str("alt+backspace"),
-                .alt = true,
+                .mod = ode_key_mod_alt,
                 .key = ode_key_back,
                 .esc_seq = str("\x1b\x7f")}));
     ·_(k, (·__ {.title = str("ctrl+backspace"),
-                .ctl = true,
+                .mod = ode_key_mod_ctl,
                 .key = ode_key_back,
                 .esc_seq = str("\x08")}));
     ·_(k, (·__ {.title = str("ctrl+alt+backspace"),
-                .ctl = true,
-                .alt = true,
+                .mod = ode_key_mod_ctl | ode_key_mod_alt,
                 .key = ode_key_back,
                 .esc_seq = str("\x1b\x08")}));
 
@@ -118,7 +117,7 @@ void odeInitKnownHotKeys() {
     static CStr fkey_infixes[] = {"\x32", "\x33", "\x34", "\x35",
                                   "\x36", "\x37", "\x38"}; // order matches the above
     ·forEach(OdeHotKey, hk, k, {
-        if (hk->alt || hk->ctl || hk->shift)
+        if (hk->mod != ode_key_mod_none)
             continue;
         UInt const key = hk->key;
         Bool const is_foo =
@@ -143,16 +142,17 @@ void odeInitKnownHotKeys() {
                 ·_(k, (·__ {.title = str2(NULL, str(titles[i]), hk->title),
                             .esc_seq = str3(NULL, pref, str(fkey_infixes[i]), suff),
                             .key = key,
-                            .alt = (i == 1 || i == 2 || i == 5 || i == 6),
-                            .ctl = (i == 3 || i == 4 || i == 5 || i == 6),
-                            .shift = (i == 0 || i == 2 || i == 4 || i == 6)}));
+                            .mod = odeModKeyOf(
+                                (i >= 3 && i <= 6),                     // ctl
+                                (i == 1 || i == 2 || i == 5 || i == 6), // alt
+                                (i == 0 || i == 2 || i == 4 || i == 6)  // shift
+                                )}));
         }
     });
 
     // ASCII hotkeys: all alt+ and some also ctrl+ and ctrl+alt+
-    static CStr a_to_z =
-        "abcdefghijklmnopqrstuvwxyz~_@|\\(){}[]^-*+#'.:,;<>!\"$&/=?`0123456789\x25"; // dont
-                                                                                     // reorder
+    static CStr a_to_z = // dont reorder:
+        "abcdefghijklmnopqrstuvwxyz~_@|\\(){}[]^-*+#'.:,;<>!\"$&/=?`0123456789\x25";
     Str ascii_ctl_escs = newStr(NULL, str(a_to_z).len, 0);
     for (UInt i = 0; a_to_z[i] != 0; i += 1) {
         U8 const c = a_to_z[i];
@@ -160,17 +160,16 @@ void odeInitKnownHotKeys() {
         Str const st = (Str) {.at = (U8*)&c, .len = 1};
         Str const se = (Str) {.at = &ascii_ctl_escs.at[i], .len = 1};
         ·_(k, (·__ {.title = str2(NULL, str("alt+"), st),
-                    .alt = true,
+                    .mod = ode_key_mod_alt,
                     .key = c,
                     .esc_seq = str2(NULL, str("\x1b"), st)}));
         if (i <= 30 && c != 'i' && c != 'h' && c != 'm') {
             ·_(k, (·__ {.title = str2(NULL, str("ctrl+"), st),
-                        .ctl = true,
+                        .mod = ode_key_mod_ctl,
                         .key = c,
                         .esc_seq = se}));
             ·_(k, (·__ {.title = str2(NULL, str("ctrl+alt+"), st),
-                        .ctl = true,
-                        .alt = true,
+                        .mod = ode_key_mod_ctl | ode_key_mod_alt,
                         .key = c,
                         .esc_seq = str2(NULL, str("\x1b"), se)}));
         }
@@ -235,7 +234,6 @@ Bool odeProcessInput() {
                         memHeapAlloc(&mem_tmp, memHeapSize(&bracketed_paste, false));
                     UInt const len = memHeapCopy(&bracketed_paste, ptr);
                     memHeapFree(&bracketed_paste);
-                    bracketed_paste.ptr = NULL;
                     ·push(inputs,
                           ((OdeInput) {
                               .kind = ode_input_str,
@@ -304,22 +302,21 @@ Bool odeProcessInput() {
                                          && !(new.btn_down.left || new.btn_down.mid
                                               || new.btn_down.right || old.dragging
                                               || new.dragging)}},
-                    .mod_key = {
-                        .ctl = ((m == 0x71 || m == 0x75 || m == 0x79 || m == 0x7d)
-                                || (m == 0x70 || m == 0x74 || m == 0x78 || m == 0x7c))
-                               || (m >= 0x30 && m <= 0x3f) || (m >= 0x50 && m <= 0x5f),
-                        .alt = ((m == 0x69 || m == 0x79 || m == 0x6d || m == 0x7d)
-                                || (m == 0x68 || m == 0x78 || m == 0x6c || m == 0x7c))
-                               || (m >= 0x28 && m <= 0x2f) || (m >= 0x38 && m <= 0x3f)
-                               || (m >= 0x48 && m <= 0x4f) || (m >= 0x58 && m <= 0x5f),
-                        .shift =
-                            ((m == 0x65 || m == 0x75 || m == 0x6d || m == 0x7d)
-                             || (m == 0x64 || m == 0x74 || m == 0x6c || m == 0x7c))
-                            || ((m >= 0x24 && m <= 0x27) || (m >= 0x34 && m <= 0x37)
-                                || (m >= 0x44 && m <= 0x47) || (m >= 0x54 && m <= 0x57))
-                            || ((m >= 0x2c && m <= 0x2f) || (m >= 0x3c && m <= 0x3f)
-                                || (m >= 0x4c && m <= 0x4f)
-                                || (m >= 0x5c && m <= 0x5f))}};
+                    .mod_key = odeModKeyOf(
+                        (((m == 0x71 || m == 0x75 || m == 0x79 || m == 0x7d) // ctl
+                          || (m == 0x70 || m == 0x74 || m == 0x78 || m == 0x7c))
+                         || (m >= 0x30 && m <= 0x3f) || (m >= 0x50 && m <= 0x5f)),
+                        (((m == 0x69 || m == 0x79 || m == 0x6d || m == 0x7d) // alt
+                          || (m == 0x68 || m == 0x78 || m == 0x6c || m == 0x7c))
+                         || (m >= 0x28 && m <= 0x2f) || (m >= 0x38 && m <= 0x3f)
+                         || (m >= 0x48 && m <= 0x4f) || (m >= 0x58 && m <= 0x5f)),
+                        (((m == 0x65 || m == 0x75 || m == 0x6d || m == 0x7d) // shift
+                          || (m == 0x64 || m == 0x74 || m == 0x6c || m == 0x7c))
+                         || ((m >= 0x24 && m <= 0x27) || (m >= 0x34 && m <= 0x37)
+                             || (m >= 0x44 && m <= 0x47) || (m >= 0x54 && m <= 0x57))
+                         || ((m >= 0x2c && m <= 0x2f) || (m >= 0x3c && m <= 0x3f)
+                             || (m >= 0x4c && m <= 0x4f)
+                             || (m >= 0x5c && m <= 0x5f))))};
                 if (evt.of.mouse.did_click || evt.of.mouse.did_drop) {
                     evt.of.mouse.btn_l = old.btn_down.left;
                     evt.of.mouse.btn_m = old.btn_down.mid;
@@ -341,9 +338,7 @@ Bool odeProcessInput() {
                 if (hotkey != NULL) {
                     ·push(inputs, ((OdeInput) {.kind = ode_input_hotkey,
                                                .of = {.key = hotkey->key},
-                                               .mod_key = {.ctl = hotkey->ctl,
-                                                           .alt = hotkey->alt,
-                                                           .shift = hotkey->shift}}));
+                                               .mod_key = hotkey->mod}));
                     i += (hotkey->esc_seq.len - 1);
                 } else
                     ·push(inputs, ((OdeInput) {.kind = ode_input_str,
@@ -353,7 +348,7 @@ Bool odeProcessInput() {
         }
     }
 
-    Bool ret_dirty = (!ode.input.exit_requested) && (inputs.len > 0)
+    Bool ret_dirty = (!ode.input.exit_requested) && inputs.len > 0
                      && ode.ui.main->ui_panel.base.on.input(&ode.ui.main->ui_panel.base,
                                                             &mem_tmp, inputs);
     memHeapFree(&mem_tmp);
