@@ -99,9 +99,9 @@ void odeUiInitMain() {
     odeUiInitSidebars();
     odeUiInitEditors();
 
-    ·append(ode.ui.main->ui_panel.base.ctls, &ode.ui.statusbar->ui_panel.base);
-    ·append(ode.ui.main->ui_panel.base.ctls, &ode.ui.sidebar_left->ui_panel.base);
-    ·append(ode.ui.main->ui_panel.base.ctls, &ode.ui.sidebar_right->ui_panel.base);
-    ·append(ode.ui.main->ui_panel.base.ctls, &ode.ui.sidebar_bottom->ui_panel.base);
-    ·append(ode.ui.main->ui_panel.base.ctls, &ode.ui.editors->ui_panel.base);
+    odeUiCtlPanelAppend(&ode.ui.main->ui_panel, &ode.ui.statusbar->ui_panel.base);
+    odeUiCtlPanelAppend(&ode.ui.main->ui_panel, &ode.ui.sidebar_left->ui_panel.base);
+    odeUiCtlPanelAppend(&ode.ui.main->ui_panel, &ode.ui.sidebar_right->ui_panel.base);
+    odeUiCtlPanelAppend(&ode.ui.main->ui_panel, &ode.ui.sidebar_bottom->ui_panel.base);
+    odeUiCtlPanelAppend(&ode.ui.main->ui_panel, &ode.ui.editors->ui_panel.base);
 }

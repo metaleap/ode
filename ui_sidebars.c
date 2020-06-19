@@ -21,13 +21,13 @@ OdeUiSidebar odeUiSidebar(Str const text, UInt const size, OdeUiCtlDocking const
             orient, ode_uictl_panel_tabs, ctls_cap)};
 }
 
-OdeUiCtl* odeUiSidebarExistingViewOfKind(OdeUiSidebar* const sidebar,
-                                         OdeUiViewKind const kind) {
+ºUInt odeUiSidebarIndexOfViewOfKind(OdeUiSidebar* const sidebar,
+                                    OdeUiViewKind const kind) {
     ·assert(kind != ode_uiview_none);
     for (UInt i = 0; i < sidebar->ui_panel.base.ctls.len; i += 1)
         if (sidebar->ui_panel.base.ctls.at[i]->view_kind == kind)
-            return sidebar->ui_panel.base.ctls.at[i];
-    return NULL;
+            return ·got(UInt, i);
+    return ·none(UInt);
 }
 
 static void initSidebarLeft(UInt const ctls_cap) {

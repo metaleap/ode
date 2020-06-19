@@ -13,7 +13,7 @@ typedef enum OdeUiCtlPanelMode {
 typedef struct OdeUiCtlPanel {
     OdeUiCtl base;
     OdeUiCtl* tab_bar;
-    UInt ctl_idx;
+    ºUInt tab_idx;
     OdeOrientation orient;
     OdeUiCtlPanelMode mode;
 } OdeUiCtlPanel;
@@ -38,7 +38,7 @@ static void onRender(OdeUiCtl* ctl_panel, OdeRect* screen_rect) {
             dst_rect = renderChild(ctl_panel, panel->tab_bar, dst_rect);
         if (ctl_panel->ctls.len > 0)
             dst_rect =
-                renderChild(ctl_panel, ctl_panel->ctls.at[panel->ctl_idx], dst_rect);
+                renderChild(ctl_panel, ctl_panel->ctls.at[panel->tab_idx.it], dst_rect);
     } else if (ctl_panel->ctls.len > 0)
         odeDie(strZ(str4(NULL, str("TODO: "), uIntToStr(NULL, panel->mode, 1, 10),
                          str(" "), panel->base.text)),
@@ -69,5 +69,23 @@ OdeUiCtlPanel odeUiCtlPanel(OdeUiCtl base, OdeOrientation orientation,
     base.on.render = onRender;
     base.on.input = odeUiCtlPanelOnInput;
     base.ctls = (OdeUiCtls)·listOfPtrs(OdeUiCtl, base.mem, 0, ctls_capacity);
-    return (OdeUiCtlPanel) {.base = base, .orient = orientation, .mode = mode};
+    return (OdeUiCtlPanel) {
+        .base = base, .tab_idx = ·none(UInt), .orient = orientation, .mode = mode};
+}
+
+UInt odeUiCtlPanelAppend(OdeUiCtlPanel* const this, OdeUiCtl* const ctl) {
+    for (UInt i = 0; i < this->base.ctls.len; i += 1)
+        ·assert(this->base.ctls.at[i] != ctl);
+    ·append(this->base.ctls, ctl);
+    ctl->parent = &this->base;
+    return this->base.ctls.len - 1;
+}
+
+Bool odeUiCtlPanelEnsureActiveTabIdx(OdeUiCtlPanel* const this, UInt const tab_idx) {
+    Bool const did = (!this->tab_idx.got) || (tab_idx != this->tab_idx.it);
+    if (did) {
+        this->tab_idx = ·got(UInt, tab_idx);
+        odeUiCtlSetDirty(this->base.ctls.at[tab_idx], true, true);
+    }
+    return did;
 }
