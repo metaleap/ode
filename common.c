@@ -73,6 +73,7 @@ typedef struct OdeUiFlags {
     Bool dirty : 1;
     Bool disabled : 1;
     Bool hidden : 1;
+    Bool selected : 1;
 } OdeUiFlags;
 
 typedef enum OdeUiViewKind {
@@ -185,19 +186,21 @@ typedef struct OdeUiEvent {
     OdeUiEventHandlers handlers;
 } OdeUiEvent;
 
-typedef struct OdeUiDataProvider {
-    Any ctx;
+typedef struct OdeUiListProvider {
+    Any self;
     struct {
         OdeUiEvent* changed;
     } on;
     ºBool (*hasSubItems)(Any item);
     ·ListOf(Any) (*subItems)(Any item);
     Strs (*columns)();
+    Strs (*itemCmdIds)(Any item);
     Str (*itemText)(Any item, UInt col_idx);
     Bool (*itemEditable)(Any item, UInt col_idx);
+    OdeUiFlags (*itemFlags)(Any item, UInt col_idx);
     OdeGlyphStyleFlags (*itemStyle)(Any item, UInt col_idx);
     OdeColored (*itemColors)(Any item, UInt col_idx);
-} OdeUiDataProvider;
+} OdeUiListProvider;
 
 typedef struct OdeInput {
     union OdeInputOf {
