@@ -23,7 +23,7 @@ OdeUiSidebar odeUiSidebar(Str const text, UInt const size, OdeUiCtlDocking const
 
 ºUInt odeUiSidebarIndexOfViewOfKind(OdeUiSidebar* const sidebar,
                                     OdeUiViewKind const kind) {
-    ·assert(kind != ode_uiview_none);
+    ·assert(kind != ode_ui_view_none);
     for (UInt i = 0; i < sidebar->ui_panel.base.ctls.len; i += 1)
         if (sidebar->ui_panel.base.ctls.at[i]->view_kind == kind)
             return ·got(UInt, i);

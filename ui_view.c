@@ -42,28 +42,28 @@ OdeUiCtl* odeUiView(OdeUiViewKind const kind, OdeUiSidebar* const preferred_side
 
         MemHeap* view_mem = odeMem(1 * 1024 * 1024);
         switch (kind) {
-            case ode_uiview_extensions: {
+            case ode_ui_view_extensions: {
                 ·newView(Extensions);
             } break;
-            case ode_uiview_explorer: {
+            case ode_ui_view_explorer: {
                 ·newView(Explorer);
             } break;
-            case ode_uiview_issues: {
+            case ode_ui_view_issues: {
                 ·newView(Issues)
             } break;
-            case ode_uiview_notifications: {
+            case ode_ui_view_notifications: {
                 ·newView(Notifications);
             } break;
-            case ode_uiview_outline: {
+            case ode_ui_view_outline: {
                 ·newView(Outline)
             } break;
-            case ode_uiview_output: {
+            case ode_ui_view_output: {
                 ·newView(Output)
             } break;
-            case ode_uiview_search: {
+            case ode_ui_view_search: {
                 ·newView(Search)
             } break;
-            case ode_uiview_terminal: {
+            case ode_ui_view_terminal: {
                 ·newView(Terminal)
             } break;
             default: odeDie(strZ(uIntToStr(NULL, kind, 1, 10)), false);

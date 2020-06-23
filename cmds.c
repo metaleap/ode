@@ -4,50 +4,50 @@
 #include "common.c"
 #include "ui_view.c"
 
-static PtrAny workbench·action·quit(OdeCmd const* const cmd, PtrAny const args_ptr,
-                                    UInt const args_len) {
+static Any workbench·action·quit(OdeCmd const* const cmd, Any const args_ptr,
+                                 UInt const args_len) {
     ode.input.exit_requested = true;
     return NULL;
 }
 
-static PtrAny workbench·view·explorer(OdeCmd const* const cmd, PtrAny const args_ptr,
-                                      UInt const args_len) {
-    return odeUiView(ode_uiview_explorer, ode.ui.sidebar_left);
+static Any workbench·view·explorer(OdeCmd const* const cmd, Any const args_ptr,
+                                   UInt const args_len) {
+    return odeUiView(ode_ui_view_explorer, ode.ui.sidebar_left);
 }
 
-static PtrAny workbench·view·extensions(OdeCmd const* const cmd, PtrAny const args_ptr,
-                                        UInt const args_len) {
-    return odeUiView(ode_uiview_extensions, ode.ui.sidebar_left);
-}
-
-static PtrAny workbench·view·issues(OdeCmd const* const cmd, PtrAny const args_ptr,
-                                    UInt const args_len) {
-    return odeUiView(ode_uiview_issues, ode.ui.sidebar_right);
-}
-
-static PtrAny workbench·view·notifications(OdeCmd const* const cmd,
-                                           PtrAny const args_ptr, UInt const args_len) {
-    return odeUiView(ode_uiview_notifications, ode.ui.sidebar_right);
-}
-
-static PtrAny workbench·view·outline(OdeCmd const* const cmd, PtrAny const args_ptr,
+static Any workbench·view·extensions(OdeCmd const* const cmd, Any const args_ptr,
                                      UInt const args_len) {
-    return odeUiView(ode_uiview_outline, ode.ui.sidebar_right);
+    return odeUiView(ode_ui_view_extensions, ode.ui.sidebar_left);
 }
 
-static PtrAny workbench·view·output(OdeCmd const* const cmd, PtrAny const args_ptr,
-                                    UInt const args_len) {
-    return odeUiView(ode_uiview_output, ode.ui.sidebar_bottom);
+static Any workbench·view·issues(OdeCmd const* const cmd, Any const args_ptr,
+                                 UInt const args_len) {
+    return odeUiView(ode_ui_view_issues, ode.ui.sidebar_right);
 }
 
-static PtrAny workbench·view·search(OdeCmd const* const cmd, PtrAny const args_ptr,
-                                    UInt const args_len) {
-    return odeUiView(ode_uiview_search, ode.ui.sidebar_bottom);
+static Any workbench·view·notifications(OdeCmd const* const cmd, Any const args_ptr,
+                                        UInt const args_len) {
+    return odeUiView(ode_ui_view_notifications, ode.ui.sidebar_right);
 }
 
-static PtrAny workbench·view·terminal(OdeCmd const* const cmd, PtrAny const args_ptr,
-                                      UInt const args_len) {
-    return odeUiView(ode_uiview_terminal, ode.ui.sidebar_bottom);
+static Any workbench·view·outline(OdeCmd const* const cmd, Any const args_ptr,
+                                  UInt const args_len) {
+    return odeUiView(ode_ui_view_outline, ode.ui.sidebar_right);
+}
+
+static Any workbench·view·output(OdeCmd const* const cmd, Any const args_ptr,
+                                 UInt const args_len) {
+    return odeUiView(ode_ui_view_output, ode.ui.sidebar_bottom);
+}
+
+static Any workbench·view·search(OdeCmd const* const cmd, Any const args_ptr,
+                                 UInt const args_len) {
+    return odeUiView(ode_ui_view_search, ode.ui.sidebar_bottom);
+}
+
+static Any workbench·view·terminal(OdeCmd const* const cmd, Any const args_ptr,
+                                   UInt const args_len) {
+    return odeUiView(ode_ui_view_terminal, ode.ui.sidebar_bottom);
 }
 
 

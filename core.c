@@ -119,7 +119,7 @@ static void termInit() {
 }
 
 void odeInit() {
-    ode.init.fs.cur_dir_path = str(getcwd((PtrAny)&mem_bss.buf, mem_bss_max));
+    ode.init.fs.cur_dir_path = str(getcwd((Any)&mem_bss.buf, mem_bss_max));
     if (ode.init.fs.cur_dir_path.at == NULL)
         odeDie("odeInit: getcwd", true);
     mem_bss.pos = ode.init.fs.cur_dir_path.len;

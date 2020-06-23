@@ -77,8 +77,8 @@ static Bool onInputMain(OdeUiCtl* ctl_panel_main, MemHeap* mem_tmp, OdeInputs in
         ode.ui.main->input.chord_key_pending = NULL;
     return (inputs.len > 0 && // usually not needed, but this is the root panel:
             odeUiCtlPanelOnInput(ctl_panel_main, mem_tmp, inputs))
-           | ctl_panel_main->dirty; // any input-processing commands or controls could
-                                    // have caused this
+           | ctl_panel_main->flags.dirty; // any input-processing commands or controls
+                                          // could have caused this
 }
 
 void odeUiMainOnResized(OdeSize const* const old, OdeSize const* const new) {

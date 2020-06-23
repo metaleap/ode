@@ -31,11 +31,7 @@ struct OdeUiCtl {
     OdeGlyphStyleFlags style;
     OdeUiCtlDocking dock;
     OdeUiViewKind view_kind;
-    struct {
-        Bool dirty : 1;
-        Bool disabled : 1;
-        Bool visible : 1;
-    };
+    OdeUiFlags flags;
     struct {
         OdeUiCtlRenderFunc render;
         OdeUiCtlInputFunc input;
@@ -46,8 +42,7 @@ struct OdeUiCtl {
 
 OdeUiCtl odeUiCtl(MemHeap* mem_heap, Str const text, OdeUiCtlDocking const dock,
                   OdeRect rect) {
-    OdeUiCtl ret_ctl = (OdeUiCtl) {.dirty = true,
-                                   .visible = true,
+    OdeUiCtl ret_ctl = (OdeUiCtl) {.flags = {.dirty = true},
                                    .text = text,
                                    .dock = dock,
                                    .rect = rect,
@@ -66,7 +61,7 @@ void odeUiCtlDispose(OdeUiCtl* ctl) {
 }
 
 void odeUiCtlSetDirty(OdeUiCtl* ctl, Bool const dirty, Bool const propagate_down) {
-    ctl->dirty = dirty;
+    ctl->flags.dirty = dirty;
     if (propagate_down)
         for (UInt i = 0; i < ctl->ctls.len; i += 1)
             odeUiCtlSetDirty(ctl->ctls.at[i], dirty, true);

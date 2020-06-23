@@ -69,16 +69,22 @@ typedef enum OdeKeyKnown : UInt {
     ode_key_pgdn = 0x1b5b367e,
 } OdeKeyKnown;
 
+typedef struct OdeUiFlags {
+    Bool dirty : 1;
+    Bool disabled : 1;
+    Bool hidden : 1;
+} OdeUiFlags;
+
 typedef enum OdeUiViewKind {
-    ode_uiview_none,
-    ode_uiview_explorer,
-    ode_uiview_extensions,
-    ode_uiview_issues,
-    ode_uiview_notifications,
-    ode_uiview_outline,
-    ode_uiview_output,
-    ode_uiview_search,
-    ode_uiview_terminal,
+    ode_ui_view_none,
+    ode_ui_view_explorer,
+    ode_ui_view_extensions,
+    ode_ui_view_issues,
+    ode_ui_view_notifications,
+    ode_ui_view_outline,
+    ode_ui_view_output,
+    ode_ui_view_search,
+    ode_ui_view_terminal,
 } OdeUiViewKind;
 
 typedef struct OdeSize {
@@ -162,7 +168,7 @@ typedef struct OdeMouseState {
 } OdeMouseState;
 
 struct OdeCmd;
-typedef PtrAny (*OdeCmdHandler)(struct OdeCmd const* const, PtrAny const, UInt const);
+typedef Any (*OdeCmdHandler)(struct OdeCmd const* const, Any const, UInt const);
 typedef struct OdeCmd {
     Str id;
     Str text;
@@ -172,6 +178,49 @@ typedef struct OdeCmd {
     OdeCmdHandler handler;
 } OdeCmd;
 typedef ·ListOf(OdeCmd) OdeCmds;
+
+typedef void (*OdeUiEventHandler)(Any, UInt);
+typedef ·ListOf(OdeUiEventHandler) OdeUiEventHandlers;
+typedef struct OdeUiEvent {
+    OdeUiEventHandlers handlers;
+} OdeUiEvent;
+
+typedef struct OdeUiDataProvider {
+    Any ctx;
+    struct {
+        OdeUiEvent* changed;
+    } on;
+    ºBool (*hasSubItems)(Any item);
+    ·ListOf(Any) (*subItems)(Any item);
+    Strs (*columns)();
+    Str (*itemText)(Any item, UInt col_idx);
+    Bool (*itemEditable)(Any item, UInt col_idx);
+    OdeGlyphStyleFlags (*itemStyle)(Any item, UInt col_idx);
+    OdeColored (*itemColors)(Any item, UInt col_idx);
+} OdeUiDataProvider;
+
+typedef struct OdeInput {
+    union OdeInputOf {
+        Str string;
+        struct OdeInputMouse {
+            Bool scroll : 1;
+            Bool down : 1;
+            Bool btn_l : 1;
+            Bool btn_m : 1;
+            Bool btn_r : 1;
+            Bool did_drop : 1;
+            Bool did_move : 1;
+            Bool did_click : 1;
+        } mouse;
+        OdeKeyKnown key;
+    } of;
+    OdeInputKind kind;
+    OdeKeyMod mod_key;
+} OdeInput;
+typedef ·SliceOf(OdeInput) OdeInputs;
+
+
+
 
 typedef struct termios Termios;
 
@@ -230,25 +279,6 @@ struct Ode {
     } ui;
 } ode;
 
-typedef struct OdeInput {
-    union OdeInputOf {
-        Str string;
-        struct OdeInputMouse {
-            Bool scroll : 1;
-            Bool down : 1;
-            Bool btn_l : 1;
-            Bool btn_m : 1;
-            Bool btn_r : 1;
-            Bool did_drop : 1;
-            Bool did_move : 1;
-            Bool did_click : 1;
-        } mouse;
-        OdeKeyKnown key;
-    } of;
-    OdeInputKind kind;
-    OdeKeyMod mod_key;
-} OdeInput;
-typedef ·SliceOf(OdeInput) OdeInputs;
 
 
 
@@ -314,7 +344,7 @@ OdeKeyMod odeModKeyOf(Bool const ctl, Bool const alt, Bool const shift) {
 }
 
 Bool odeModKeyHas(OdeKeyMod const mod, OdeKeyMod const must) {
-    return (mod & must) == must;
+    return ·fHas(mod, must);
 }
 
 OdeHotKey* odeHotKey(OdeKeyKnown const key, OdeKeyMod const mod) {
@@ -323,6 +353,22 @@ OdeHotKey* odeHotKey(OdeKeyKnown const key, OdeKeyMod const mod) {
             return hk;
     });
     return NULL;
+}
+
+UInt odeUiEventSub(OdeUiEvent* const event, OdeUiEventHandler const handler) {
+    ·append(event->handlers, handler);
+    return event->handlers.len - 1;
+}
+
+void odeUiEventUnSub(OdeUiEvent* const event, UInt const handler_idx) {
+    for (UInt i = handler_idx + 1; i < event->handlers.len; i += 1)
+        event->handlers.at[i - 1] = event->handlers.at[i];
+    event->handlers.len -= 1;
+}
+
+void odeUiEventPub(OdeUiEvent* const event, Any const args, UInt const args_len) {
+    for (UInt i = 0; i < event->handlers.len; i += 1)
+        event->handlers.at[i](args, args_len);
 }
 
 void odeScreenClearRectText(OdeRect const* const rect);

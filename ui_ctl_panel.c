@@ -20,9 +20,9 @@ typedef struct OdeUiCtlPanel {
 
 static OdeRect renderChild(OdeUiCtl* ctl_panel, OdeUiCtl* ctl, OdeRect dst_rect) {
     ctl->parent = ctl_panel;
-    if (ctl->visible)
+    if (!ctl->flags.hidden)
         dst_rect = odeRender(ctl, dst_rect);
-    ctl->dirty = false;
+    ctl->flags.dirty = false;
     return dst_rect;
 }
 

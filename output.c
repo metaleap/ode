@@ -85,9 +85,10 @@ OdeRect odeRender(OdeUiCtl* const ctl, OdeRect const screen_rect) {
                    false);
     }
 
-    if (ctl->dirty && (dst_rect.pos.x < (screen_rect.pos.x + screen_rect.size.width))
+    if (ctl->flags.dirty
+        && (dst_rect.pos.x < (screen_rect.pos.x + screen_rect.size.width))
         && (dst_rect.pos.y < (screen_rect.pos.y + screen_rect.size.height))) {
-        ctl->dirty = false;
+        ctl->flags.dirty = false;
         OdePos dst_pos_max = pos(dst_rect.pos.x + dst_rect.size.width,
                                  dst_rect.pos.y + dst_rect.size.height);
         if (ctl->ctls.len == 0)
@@ -124,7 +125,7 @@ void odeRenderOutput(OdeUiCtl* ode_ui_main, OdeSize const ode_output_screen_size
                 cells_dirty[x][y] = true;
             }
     }
-    if (ode_ui_main->dirty)
+    if (ode_ui_main->flags.dirty)
         ode.stats.num_renders += 1;
     odeRender(ode_ui_main, rect(0, 0, screen_size.width, screen_size.height));
 
