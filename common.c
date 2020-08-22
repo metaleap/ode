@@ -39,7 +39,7 @@ typedef enum OdeKeyMod {
     ode_key_mod_shift = 4,
 } OdeKeyMod;
 
-typedef enum OdeKeyKnown : UInt {
+typedef enum OdeKeyKnown : U64 {
     ode_key_none = 0,
     ode_key_tab = 0x09,
     ode_key_f1 = 0x1b4f50,
